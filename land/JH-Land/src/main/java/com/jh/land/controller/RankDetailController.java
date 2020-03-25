@@ -18,14 +18,10 @@ public class RankDetailController {
     @Autowired
     private IRankDetailService rankDetailService;
     /*
-     * 功能描述:地块概览
+     * 功能描述:地块基础信息
      * @Param:
      * @Return:
      * @version<1>  2020/3/23  wangli :Created
-     */
-    /**
-     *  @description: 根据父类区域ID查询其下一级区域列表
-     *  @version <1> 2018-01-18 cxj:Created.
      */
     @ApiOperation(value="",notes="根据地块id查询地块详情的基本信息")
     @ApiImplicitParam(name = "rankId",value = "地块ID",required = false,paramType="form",dataType = "Long")

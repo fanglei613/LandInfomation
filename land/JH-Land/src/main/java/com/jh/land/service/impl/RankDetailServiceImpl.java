@@ -3,6 +3,7 @@ package com.jh.land.service.impl;
 import com.jh.biz.feign.IRegionService;
 import com.jh.land.entity.InitRank;
 import com.jh.land.entity.RankDetail;
+import com.jh.land.model.RankDetailForBase;
 import com.jh.land.model.RankParam;
 import com.jh.land.model.RankVO;
 import com.jh.land.service.IRankDetailService;
@@ -10,6 +11,7 @@ import com.jh.land.service.IRankInfoService;
 import com.jh.vo.ResultMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.math.BigDecimal;
 import java.security.KeyStore;
 import java.util.HashMap;
 import java.util.Map;
@@ -47,15 +49,29 @@ public class RankDetailServiceImpl implements IRankDetailService {
         rankParam.setTableName(tableName);
         rankParam.setRankId(rankId);
         InitRank rankDetail = rankInfoService.queryRankById(rankParam);
-        String rankType = "";
+        //用地分类
+        String rankType = rankDetail.getRankTypeName();
         //地块面积
-
+        BigDecimal rankArea = rankDetail.getArea();
         //地块经纬度
-
+        //经度  正数是东经  负数是西经
+        BigDecimal lon = rankDetail.getLon();
+        String lonStr = getLonAndLat(lon,0);
+        //纬度 正数是北纬  负数是南纬
+        BigDecimal lat = rankDetail.getLat();
+        String latStr = getLonAndLat(lat,1);
+        //经纬度
+        String lonAndLat = lonStr + latStr;
         //地块地址
         String rankAddress = proviceName + cityName + countyName + townName;
 
-        return null;
+        RankDetailForBase rankDetailForBase = new RankDetailForBase();
+        rankDetailForBase.setRankNo(rankName);
+        rankDetailForBase.setRankType(rankType);
+        rankDetailForBase.setRankArea(rankArea);
+        rankDetailForBase.setRankAddress(rankAddress);
+        rankDetailForBase.setLonAndLat(lonAndLat);
+        return ResultMessage.success(rankDetailForBase);
     }
 
     /*
@@ -184,5 +200,50 @@ public class RankDetailServiceImpl implements IRankDetailService {
 
 
         return rankInfo;
+    }
+
+    public String getLonAndLat(BigDecimal lonOrLat,int type){
+
+        String lonOrLatStr = lonOrLat.toString();
+        int point = lonOrLatStr.indexOf(".");
+        //longitude  度  截取lon的小数点前的数字
+        String du = lonOrLatStr.substring(0,point);
+        String calcNum1 = "0"+ lonOrLatStr.substring(point,lonOrLatStr.length());
+        //计算分
+        BigDecimal fenDecimal = new BigDecimal(calcNum1).multiply(new BigDecimal(60));
+        //分 截取lon小数点后的小数部分*60 得到的数字 fen 获取小数点前的部分为分
+        int pointFen = fenDecimal.toString().indexOf(".");
+        BigDecimal fen = fenDecimal.setScale(BigDecimal.ROUND_DOWN);
+        //秒 截取fen 小数点后的数字 *60 得到的数字 miao 截取小数点前的部分为秒
+        String clacNum2 = "0" + fen.toString().substring(pointFen,fen.toString().length());
+        //计算秒
+        BigDecimal miao = new BigDecimal(clacNum2).multiply(new BigDecimal(60)).setScale(BigDecimal.ROUND_DOWN);
+        int lonF = lonOrLat.setScale(0,BigDecimal.ROUND_HALF_UP).signum();
+        String lonOrLatReturn = "";
+        switch (lonF){//判断正负数
+            case -1://负数
+                du = du.substring(1,du.length());//负数要把前面的负号去掉
+                if(type ==0 ){//经度
+                    lonOrLatReturn = "西经W" + du +"°" + fen + "′" + miao + "″";
+                }else {//纬度
+                    lonOrLatReturn = "南纬S" + du +"°" + fen + "′" + miao + "″";
+                }
+                break;
+            case 0://0
+                if(type ==0 ){//经度
+                    lonOrLatReturn = "本初子午线";
+                }else {//纬度
+                    lonOrLatReturn = "赤道";
+                }
+                break;
+            case 1://正数
+                if(type ==0 ){//经度
+                    lonOrLatReturn = "东经E" + du +"°" + fen + "′" + miao + "″";
+                }else {//纬度
+                    lonOrLatReturn = "北纬N" + du +"°" + fen + "′" + miao + "″";
+                }
+                break;
+        }
+        return lonOrLatReturn;
     }
 }
