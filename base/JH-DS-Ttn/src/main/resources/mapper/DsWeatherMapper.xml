@@ -45,6 +45,57 @@
             regionId
     </select>
 
+    <!--根据区域、起止日期查询日期段内区域的气温数据-->
+    <select id="findWeatherForRank" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        SELECT
+        ymd AS DATE,
+        CAST ( b_wendu AS FLOAT ) AS MAXVALUE,
+        CAST ( y_wendu AS FLOAT ) AS MINVALUE,
+        region_id AS regionId,
+        area_name AS regionName
+        FROM
+        ds_weather
+        WHERE
+        del_flag = '1'AND publish_status = 2201
+        AND region_id = #{regionId}
+        AND ymd BETWEEN to_date(#{startDate},'yyyy-MM-dd')
+        AND to_date(#{endDate},'yyyy-MM-dd')
+        ORDER BY
+        ymd
+    </select>
 
+    <!--根据区域、起止日期查询日期段内区域的地温数据-->
+    <select id="findTtnForRank" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        SELECT
+        data_time AS DATE,
+        CAST ( t AS FLOAT ) AS value,
+        region_id AS regionId
+        FROM
+        ds_t
+        WHERE
+        del_flag = '1'AND publish_status = 2201
+        AND region_id = #{regionId}
+        AND data_time BETWEEN to_date(#{startDate},'yyyy-MM-dd')
+        AND to_date(#{endDate},'yyyy-MM-dd')
+        ORDER BY
+        data_time
+    </select>
+
+    <!--根据区域、起止日期查询日期段内区域的降雨数据-->
+    <select id="findTrmmForRank" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        SELECT
+        data_time AS DATE,
+        CAST ( trmm AS FLOAT ) AS value,
+        region_id AS regionId
+        FROM
+        ds_t
+        WHERE
+        del_flag = '1' AND publish_status = 2201
+        AND region_id = #{regionId}
+        AND data_time BETWEEN to_date(#{startDate},'yyyy-MM-dd')
+        AND to_date(#{endDate},'yyyy-MM-dd')
+        ORDER BY
+        data_time
+    </select>
 
 </mapper>

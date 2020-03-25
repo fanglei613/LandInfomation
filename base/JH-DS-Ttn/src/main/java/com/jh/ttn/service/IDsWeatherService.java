@@ -22,6 +22,11 @@ public interface IDsWeatherService {
 	*/
 	ResultMessage findRegionWeather(Long regionId);
 
+	/*根据年份和区域查询气温列表*/
+	ResultMessage findRankWeatherList(Long regionId, String date);
+
+	/*根据年份和地块id查询年平均气象数据*/
+	ResultMessage findRankWeather(Long regionId, String date);
 
 	
 }
