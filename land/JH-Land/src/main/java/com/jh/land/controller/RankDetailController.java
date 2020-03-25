@@ -32,9 +32,7 @@ public class RankDetailController {
     @RequestMapping(value="/rankDetailForBase",method= RequestMethod.GET)
     public ResultMessage rankDetailForBase(Long rankId){
 
-        //
-        rankDetailService.rankDetailForBase(rankId);
-        return null;
+        return  rankDetailService.rankDetailForBase(rankId);
     }
 
 
