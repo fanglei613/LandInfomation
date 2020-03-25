@@ -3,9 +3,9 @@ spring:
   application:
     name: JH-DS-Ttn
   datasource:
-    url: jdbc:postgresql://192.168.1.223:5432/ground
-    username: postgres
-    password: pgdev2019
+    url: jdbc:postgresql://jiahe-product-db.ch77edmdikxb.rds.cn-northwest-1.amazonaws.com.cn:5432/ground
+    username: jiaheinfo
+    password: JiaHe2020Cloud
 
 #    url: jdbc:postgresql://192.168.1.223:5433/ground_pro
 #    username: postgres
