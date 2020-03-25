@@ -36,6 +36,12 @@ public class RankParam {
     @JsonFormat(pattern="yyyy-MM-dd")
     private LocalDate dataTime;
 
+    //地块id
+    private Long rankId;
+
+    //地块表名
+    private String tableName;
+
 
     public Long getRegionId() {
         return regionId;
@@ -116,5 +122,21 @@ public class RankParam {
 
     public void setDataTime(LocalDate dataTime) {
         this.dataTime = dataTime;
+    }
+
+    public Long getRankId() {
+        return rankId;
+    }
+
+    public void setRankId(Long rankId) {
+        this.rankId = rankId;
+    }
+
+    public String getTableName() {
+        return tableName;
+    }
+
+    public void setTableName(String tableName) {
+        this.tableName = tableName;
     }
 }

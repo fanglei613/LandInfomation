@@ -1,18 +1,26 @@
 package com.jh.land.service.impl;
 
 import com.jh.biz.feign.IRegionService;
+import com.jh.land.entity.InitRank;
 import com.jh.land.entity.RankDetail;
+import com.jh.land.model.RankParam;
+import com.jh.land.model.RankVO;
 import com.jh.land.service.IRankDetailService;
+import com.jh.land.service.IRankInfoService;
 import com.jh.vo.ResultMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.security.KeyStore;
+import java.util.HashMap;
 import java.util.Map;
 
 public class RankDetailServiceImpl implements IRankDetailService {
 
     @Autowired
     private IRegionService regionService;
+
+    @Autowired
+    private IRankInfoService rankInfoService;
 
 
     @Override
@@ -25,41 +33,20 @@ public class RankDetailServiceImpl implements IRankDetailService {
          * 地址  省市县乡镇
          */
         //截取地块所属年份 +所属乡镇+自然数
-        String rankIdStr = rankId.toString();
-        String year = rankIdStr.substring(0,4);//年份
-        String regionIdStr = rankIdStr.substring(4,13);//所属乡镇
-        String id = rankIdStr.substring(13,rankIdStr.length());//自然数 地块编号
-        Long regionId = Long.parseLong(regionIdStr);//所属乡镇id
-        //--根据region_id查init_region表中所属的地级市
-
-        //根据region_id查询所属的区县
-        ResultMessage townMsg = regionService.findRegionById(regionId);
-        //根据区县的id查询所属的地级市id
-        Map<String,Object> town =(Map<String,Object> ) townMsg.getData();//所属乡镇  level=5
-
-        Long countyId = Long.parseLong(town.get("parentId").toString());
-        ResultMessage countyMsg = regionService.findRegionById(countyId);//所属区县 level=4
-        Map<String,Object> county =(Map<String,Object> ) countyMsg.getData();
-
-        Long cityId = Long.parseLong(county.get("parentId").toString());
-
-        //根据所属的地级市id查询 地级市信息
-        ResultMessage cityMsg = regionService.findRegionById(cityId);
-        Map<String,Object> city =(Map<String,Object> ) cityMsg.getData();
-
-        Long proviceId = Long.parseLong(city.get("parentId").toString());
-        ResultMessage proviceMsg = regionService.findRegionById(cityId);
-        Map<String,Object> provice =(Map<String,Object> ) proviceMsg.getData();
-        //根据年份和获取到的地级市id 拼接成对应的地块表的表名
-        String tableName = "init_rank_" + year + "_" + cityId;
-
-        String proviceName = provice.get("chinaName").toString();
-        String cityName = city.get("chinaName").toString();
-        String countyName = county.get("chinaName").toString();
-        String townName = town.get("chinaName").toString();
+        Map<String,Object> rankInfo = getRankInfo(rankId);
+        String proviceName = rankInfo.get("proviceName").toString();
+        String cityName = rankInfo.get("cityName").toString();
+        String countyName = rankInfo.get("countyName").toString();
+        String townName = rankInfo.get("townName").toString();
+        String id = rankInfo.get("id").toString();
         //地块名称
         String rankName = proviceName + cityName + countyName + townName + id + "号";
         //用地分类  通过地块id  查询对应的地块表
+        String tableName = rankInfo.get("tableName").toString();
+        RankParam rankParam = new RankParam();
+        rankParam.setTableName(tableName);
+        rankParam.setRankId(rankId);
+        InitRank rankDetail = rankInfoService.queryRankById(rankParam);
         String rankType = "";
         //地块面积
 
@@ -146,7 +133,56 @@ public class RankDetailServiceImpl implements IRankDetailService {
      * @Return:
      * @version<1>  2020/3/25  wangli :Created
      */
-    public Long getRankTableName(Integer rankId){
-        return null;
+    public Map<String,Object>  getRankInfo(Long rankId){
+        String rankIdStr = rankId.toString();
+        String year = rankIdStr.substring(0,4);//年份
+        String regionIdStr = rankIdStr.substring(4,13);//所属乡镇
+        String id = rankIdStr.substring(13,rankIdStr.length());//自然数 地块编号
+        Long regionId = Long.parseLong(regionIdStr);//所属乡镇id
+        //--根据region_id查init_region表中所属的地级市
+
+        //根据region_id查询所属的区县
+        ResultMessage townMsg = regionService.findRegionById(regionId);
+        //根据区县的id查询所属的地级市id
+        Map<String,Object> town =(Map<String,Object> ) townMsg.getData();//所属乡镇  level=5
+
+        Long countyId = Long.parseLong(town.get("parentId").toString());
+        ResultMessage countyMsg = regionService.findRegionById(countyId);//所属区县 level=4
+        Map<String,Object> county =(Map<String,Object> ) countyMsg.getData();
+
+        Long cityId = Long.parseLong(county.get("parentId").toString());
+
+        //根据所属的地级市id查询 地级市信息
+        ResultMessage cityMsg = regionService.findRegionById(cityId);
+        Map<String,Object> city =(Map<String,Object> ) cityMsg.getData();
+
+        Long proviceId = Long.parseLong(city.get("parentId").toString());
+        ResultMessage proviceMsg = regionService.findRegionById(cityId);
+        Map<String,Object> provice =(Map<String,Object> ) proviceMsg.getData();
+        //根据年份和获取到的地级市id 拼接成对应的地块表的表名
+        String tableName = "init_rank_" + year + "_" + cityId;
+
+        String proviceName = provice.get("chinaName").toString();
+        String proviceCode = provice.get("regionCode").toString();
+        String cityName = city.get("chinaName").toString();
+        String cityCode = provice.get("regionCode").toString();
+        String countyName = county.get("chinaName").toString();
+        String countyCode = provice.get("regionCode").toString();
+        String townName = town.get("chinaName").toString();
+        String townCode = town.get("regionCode").toString();
+        Map<String,Object> rankInfo = new HashMap<>();
+        rankInfo.put("proviceName",proviceName);
+        rankInfo.put("proviceCode",proviceCode);
+        rankInfo.put("cityName",cityName);
+        rankInfo.put("cityCode",cityCode);
+        rankInfo.put("countyName",countyName);
+        rankInfo.put("countyCode",countyCode);
+        rankInfo.put("townName",townName);
+        rankInfo.put("townCode",townCode);
+        rankInfo.put("id",id);
+        rankInfo.put("tableName",tableName);
+
+
+        return rankInfo;
     }
 }
