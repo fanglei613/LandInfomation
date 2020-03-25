@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="CompilerConfiguration">
+    <annotationProcessing>
+      <profile name="Maven default annotation processors profile" enabled="true">
+        <sourceOutputDir name="target/generated-sources/annotations" />
+        <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
+        <outputRelativeToContentRoot value="true" />
+        <module name="JH-Biz" />
+        <module name="JH-Common" />
+        <module name="JH-Sys" />
+        <module name="JH-Map" />
+        <module name="JH-Server" />
+        <module name="JH-Gateway" />
+        <module name="JH-Land" />
+      </profile>
+    </annotationProcessing>
+  </component>
+  <component name="JavacSettings">
+    <option name="ADDITIONAL_OPTIONS_OVERRIDE">
+      <module name="JH-Biz" options="-Xlint:unchecked -Xlint:deprecation" />
+      <module name="JH-Common" options="-Xlint:unchecked -Xlint:deprecation" />
+      <module name="JH-Gateway" options="-Xlint:unchecked -Xlint:deprecation" />
+      <module name="JH-Land" options="-Xlint:unchecked -Xlint:deprecation" />
+      <module name="JH-Map" options="-Xlint:unchecked -Xlint:deprecation" />
+      <module name="JH-Server" options="-Xlint:unchecked -Xlint:deprecation" />
+      <module name="JH-Sys" options="-Xlint:unchecked -Xlint:deprecation" />
+    </option>
+  </component>
+</project>
