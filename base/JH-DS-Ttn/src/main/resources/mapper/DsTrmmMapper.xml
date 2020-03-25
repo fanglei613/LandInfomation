@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jh.ttn.mapping.IDsTrmmMapper" >
+
+    <!--
+	*根据区域、起止日期查询日期段内区域及下一级区域的降雨数据
+	*@param TtnEntity : 参数，（区域ID，起止日期）
+	*@return List<TtnVo> : 降雨数据
+	*@Version <1> 2018-04-28 cxw: Created.
+    -->
+    <select id="findTrmm" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        select data_time as date,(case when trmm is null then 0 else trmm end) as value ,a.region_id as regionId,b.china_name as regionName,b.region_code as regionCode
+        from (select region_id ,china_name,region_code from init_region where parent_id =#{regionId} or region_id=#{regionId}) b left join ds_trmm a on
+        a.region_id=b.region_id where  a.publish_status = 2201 and a.resolution=#{resolution} and a.data_time>=cast(#{startDate} as timestamp ) and cast(#{endDate} as timestamp )>=a.data_time  order by a.data_time,regionId
+    </select>
+
+    <!--
+	 *根据区域、起止时间查询时间段内该区域的降雨数据
+	 *@param param : 包含region_id和startDate和endDate
+	 *@return List<TtnVo> ：
+	 *@Version <1> 2018-04-28 cxw: Created.
+      -->
+    <select id="findTrmmByRegion" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        SELECT SUBSTRING
+            ( to_char( d.DATE, 'yyyy-MM-dd' ), 6 ) AS monthAndDay,
+            T.*
+        FROM
+            (
+            SELECT DATE
+                ( zz )
+            FROM
+            generate_series ( CAST ( #{startDate} AS TIMESTAMP ), CAST ( #{endDate} AS TIMESTAMP ), '1 day' ) AS tt ( zz )) d
+            LEFT JOIN (
+            SELECT
+                data_time,
+                ( CASE WHEN trmm IS NULL THEN 0 ELSE trmm END ) AS
+            VALUE
+                ,
+                A.region_id AS regionId,
+                b.china_name AS regionName,
+                b.region_code AS regionCode
+            FROM
+                init_region b
+                LEFT JOIN ds_trmm A ON A.region_id = b.region_id
+            WHERE
+                 A.publish_status = 2201
+                AND A.resolution = #{resolution}
+                AND b.region_id = #{regionId}
+                AND A.data_time >= CAST ( #{startDate} AS TIMESTAMP )
+                AND CAST ( #{endDate} AS TIMESTAMP ) >= A.data_time
+            ) T ON D.DATE = T.data_time
+    </select>
+
+    <!--<select id="findTrmmByRegion" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity"  >-->
+        <!--select SUBSTRING(to_char(data_time,'yyyy-MM-dd'), 6,6)  as monthAndDay,(case when trmm is null then 0 else trmm end) as value ,a.region_id as-->
+        <!--regionId,b.china_name as regionName,b.region_code as regionCode from init_region b left join ds_trmm a on a.region_id=b.region_id where b.region_id=#{regionId} and-->
+        <!--a.data_time>=cast(#{startDate} as timestamp ) and cast(#{endDate} as timestamp ) >=a.data_time and a.publish_status = 2201 and a.resolution=#{resolution} order by a.data_time,regionId-->
+    <!--</select>-->
+
+    <!--
+     *根据区域构造7天降雨数据查询服务
+     *@param TtnEntity : 参数，（区域ID，起止日期）
+     *@return List<TtnVo> : 降雨数据
+     *@Version <1> 2018-04-28 cxw: Created.
+    -->
+    <select id="findTrmmForSeven" resultType="com.jh.ttn.vo.TrmmSevenVo"  parameterType="java.util.LinkedHashMap"  >
+        select  to_char(t.date,'yyyy-MM-dd') as date,t. val,t.region_id,a.avg,b.lastyearavg,c.lastavg ,r.china_name as region_name from (select data_time as date,trmm as val,region_id
+         from ds_trmm where  region_id in  ( 3100000000,2300000000,2800000000,7300000000,16900000000 )
+         and data_time>= cast(#{now_sdate} as timestamp )    and  cast(#{now_edate} as timestamp )>=data_time) t  left join
+        (select region_id,round(avg(trmm),2) as avg from  ds_trmm where region_id in  ( 3100000000,2300000000,2800000000,7300000000,16900000000 )
+         and data_time>= cast(#{now_sdate} as timestamp )    and  cast(#{now_edate} as timestamp )>=data_time   group by region_id) a on t.region_id = a.region_id left join
+        (select region_id,round(avg(trmm),2) as lastyearavg from  ds_trmm where region_id in  ( 3100000000,2300000000,2800000000,7300000000,16900000000 )
+        and   data_time>=cast(#{last_sdate} as timestamp ) and cast(#{last_edate} as timestamp )>=data_time  group by region_id) b on  t.region_id = b.region_id left join
+        (select region_id,round(avg(trmm),2) as lastavg from  ds_trmm where region_id in  ( 3100000000,2300000000,2800000000,7300000000,16900000000 )
+         and data_time>= cast(#{lastweek_sdate} as timestamp )   and  cast(#{lastweek_edate} as timestamp )>=data_time  group by region_id) c  on  t.region_id = c.region_id
+        left join init_region r on r.region_id = c.region_id order by region_id,date
+    </select>
+
+
+
+
+    <!--以下为降雨报告数据查询-->
+    <!--
+        *根据区域、起止日期查询日期段内下一级区域的降雨数据(按区域值相加)
+        *@param TtnEntity : 参数，（区域ID，起止日期）
+        *@return List<TtnVo> : 降雨数据
+        *@Version <1> 2018-04-28 cxw: Created.
+        -->
+    <select id="findTrmmById" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        select (case when sum(trmm) is null then 0 else sum(trmm) end) as value ,b.region_id as regionId,b.china_name as regionName ,b.region_code as regionCode from (select region_id ,
+        china_name ,region_code from init_region where parent_id =#{regionId} or region_id=#{regionId}) b left join ds_trmm a on a.region_id=b.region_id where a.data_time>=cast(#{startDate} as timestamp )
+        and cast(#{endDate} as timestamp )>=a.data_time and a.publish_status = 2201 and a.resolution=#{resolution} group by b.region_id,b.china_name,b.region_code order by value
+    </select>
+
+    <!--
+	*根据区域、起止日期查询日期段内区域的降雨数据(按区域值相加)
+	*@param TtnEntity : 参数，（区域ID，起止日期）
+	*@return List<TtnVo> : 降雨数据
+	*@Version <1> 2018-04-28 cxw: Created.
+    -->
+    <select id="findSumTrmmById" resultType="java.lang.Double"  parameterType="com.jh.ttn.entity.TtnEntity"  >
+        select (case when sum(trmm) is null then 0 else sum(trmm) end) as value from (select region_id ,china_name from init_region where region_id =#{regionId})
+        b left join ds_trmm a on a.region_id=b.region_id where a.data_time>=cast(#{startDate} as timestamp ) and cast(#{endDate} as timestamp )>=a.data_time and a.publish_status = 2201 and a.resolution=#{resolution}
+    </select>
+
+    <!--
+	*根据区域、起止日期查询日期段内区域最大降雨数据
+	*@param TtnEntity : 参数，（区域ID，起止日期）
+	*@return List<TtnVo> : 降雨数据
+	*@Version <1> 2018-04-28 cxw: Created.
+    -->
+    <select id="findMaxTrmmById" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        select (case when trmm is null then 0 else trmm end) as value ,b.region_id,b.china_name as regionName,b.region_code as regionCode,a.data_time as date from (select region_id ,china_name,region_code
+        from init_region where region_id =#{regionId}) b left join ds_trmm a on a.region_id=b.region_id where a.data_time>=cast(#{startDate} as timestamp ) and
+        cast(#{endDate} as timestamp ) >=a.data_time and a.publish_status = 2201  and a.resolution=#{resolution} order by value desc
+    </select>
+
+    <!--
+	*根据区域、起止日期查询日期段内区域的降雨数据
+	*@param TtnEntity : 参数，（区域ID，起止日期）
+	*@return List<TtnVo> : 降雨数据
+	*@Version <1> 2018-04-28 cxw: Created.
+     -->
+    <select id="findTrmmForMonById" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        select a.data_time as date,(case when trmm is null then 0 else trmm end) as value ,a.region_id as regionId,b.china_name as regionName,b.region_code as regionCode from (select region_id ,
+        china_name,region_code  from init_region where   region_id=#{regionId}) b left join ds_trmm a on a.region_id=b.region_id where a.data_time>=cast(#{startDate} as timestamp )
+        and cast(#{endDate} as timestamp )>=a.data_time and a.publish_status = 2201 and a.resolution=#{resolution} order by b.region_id,a.data_time
+    </select>
+
+    <!--
+    *根据区域、起止日期查询日期段内下一级区域的降雨数据(某天最大降雨城市)
+    *@param TtnEntity : 参数，（区域ID，起止日期）
+    *@return List<TtnVo> : 降雨数据
+    *@Version <1> 2018-04-28 cxw: Created.
+    -->
+    <select id="findTrmmMaxByDate" resultType="com.jh.ttn.vo.TtnVo"  parameterType="com.jh.ttn.entity.TtnEntity"  >
+        select (case when trmm is null then 0 else trmm end) as value,b.region_id as regionId,b.china_name as regionName,b.region_code as regionCode ,a.data_time as date from (select region_id ,china_name,region_code
+        from init_region where parent_id =#{regionId}) b left join ds_trmm a on a.region_id=b.region_id where a.data_time>=cast(#{startDate} as timestamp ) and
+        cast(#{endDate} as timestamp )>=a.data_time and a.publish_status = 2201 and a.resolution=#{resolution} order by value desc
+    </select>
+
+    <!--查询开始和结束日期时间段内有降雨数据的所有日期-->
+    <select id="findTrmmTimes" resultType="java.lang.String" parameterType="com.jh.ttn.entity.TtnEntity" >
+        select to_char(data_time,'yyyy-MM-dd') as date from ds_trmm where  del_flag='1' and data_status='1' and publish_status = 2201
+        <if test="regionId != null" >
+            and  region_id = #{regionId}
+        </if>
+        <if test="resolution != null" >
+            and  resolution = #{resolution}
+        </if>
+        <if test="startDate != null and endDate != null"  >
+            and  data_time BETWEEN  #{startDate} and #{endDate}
+        </if>
+        order by data_time asc
+    </select>
+
+    <!--查询开始和结束日期时间段内有降雨数据-->
+    <select id="findAllTrmm" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity" >
+        select DISTINCT region_id as regionId,resolution,to_char(data_time,'yyyy-MM') as dataMonth from ds_trmm where  del_flag='1' and data_status='1' and publish_status = 2201 and resolution is not null
+        <if test="regionId != null" >
+            and  region_id = #{regionId}
+        </if>
+        <if test="startDate != null and endDate != null"  >
+            and  data_time  BETWEEN  #{startDate} and #{endDate}
+        </if>
+        group by dataMonth, regionId,resolution
+        order by regionId,dataMonth desc
+
+    </select>
+
+</mapper>

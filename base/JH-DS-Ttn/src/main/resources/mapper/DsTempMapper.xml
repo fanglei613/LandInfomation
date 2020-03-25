@@ -1,0 +1,287 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jh.ttn.mapping.IDsTempMapper" >
+
+
+    <!--根据区域、起止日期查询日期段内区域及下一级区域的气温数据-->
+    <select id="findTemp" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity"  >
+       SELECT
+            A.ymd AS DATE,
+            cast(b_wendu as FLOAT) AS maxValue,
+	        cast(y_wendu as FLOAT) AS minValue,
+	        (cast(b_wendu as FLOAT) + cast(y_wendu as FLOAT))/2 AS value,
+            A.region_id AS regionId,
+            b.china_name AS regionName,
+            b.region_code AS regionCode
+        FROM
+            ( SELECT region_id, china_name, region_code FROM init_region WHERE parent_id = #{regionId} OR region_id = #{regionId} ) b
+            LEFT JOIN ds_weather A ON A.region_id = b.region_id
+        WHERE
+            A.ymd BETWEEN to_date( #{startDate}, 'yyyy-MM-dd' )
+            AND to_date( #{endDate}, 'yyyy-MM-dd' )
+            AND A.publish_status = 2201
+        ORDER BY
+            A.ymd,
+            regionId
+    </select>
+
+
+    <!--根据区域、起止时间查询时间段内该区域的气温数据-->
+    <select id="findTempByRegion" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        SELECT SUBSTRING
+            ( to_char( d.DATE, 'yyyy-MM-dd' ), 6 ) AS monthAndDay,
+            T.*
+        FROM
+            (
+            SELECT DATE
+                ( zz )
+            FROM
+            generate_series ( CAST ( #{startDate} AS TIMESTAMP ), CAST ( #{endDate} AS TIMESTAMP ), '1 day' ) AS tt ( zz )) d
+            LEFT JOIN (
+            SELECT A
+                .ymd as data_time,
+                CAST ( b_wendu AS FLOAT ) AS MAXVALUE,
+                CAST ( y_wendu AS FLOAT ) AS MINVALUE,
+                A.region_id AS regionId,
+                b.china_name AS regionName,
+                b.region_code AS regionCode
+            FROM
+                init_region b
+                LEFT JOIN ds_weather A ON A.region_id = b.region_id
+            WHERE
+                b.region_id = #{regionId}
+                AND A.ymd BETWEEN to_date( #{startDate}, 'yyyy-MM-dd' )
+                AND to_date( #{endDate}, 'yyyy-MM-dd' )
+            AND A.publish_status = 2201
+            ) T ON D.DATE = T.data_time
+            ORDER BY d.DATE
+    </select>
+
+    
+    <!--查询当前查询区域和时间段内该区域平均最低气温和平均最高气温-->
+    <select id="findAvgMaxMin" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity" >
+        SELECT
+        (
+            CASE
+                    
+                    WHEN AVG ( to_number( b_wendu, '999999999' ) ) IS NULL THEN
+                    0 ELSE ROUND( AVG ( to_number( b_wendu, '999999999' )) ) 
+                END 
+                ) AS MAXVALUE,
+                (
+                CASE
+                        
+                        WHEN AVG ( to_number( y_wendu, '999999999' ) ) IS NULL THEN
+                        0 ELSE ROUND( AVG ( to_number( y_wendu, '999999999' )) ) 
+                    END 
+                    ) AS MINVALUE,
+                    A.region_id AS regionId,
+                    b.china_name AS regionName,
+                    b.region_code AS regionCode 
+                FROM
+                    ( SELECT region_id, china_name, region_code FROM init_region WHERE region_id = #{regionId} ) b
+                    LEFT JOIN ds_weather A ON A.region_id = b.region_id 
+                WHERE
+                    A.ymd BETWEEN to_date( #{startDate}, 'yyyy-MM-dd' ) 
+                    AND to_date( #{endDate}, 'yyyy-MM-dd' ) 
+                    AND A.publish_status = 2201 
+                GROUP BY
+                    A.region_id,
+                b.china_name,
+            b.region_code
+    </select>
+
+    <!-- 根据区域id，开始和结束日期查询该区域当前时间段内，上期(30天前)、去年同期、前年同期的最高温和最低温数据 -->
+    <select id="findMaxMinBefore" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity" >
+        SELECT--当前查询时间段平均最低气温和平均最高气温
+        MAX (
+        to_number( b_wendu, '999999999' )) AS MAXVALUE,
+        MIN (
+        to_number( y_wendu, '999999999' )) AS MINVALUE,
+        A.region_id AS regionId,
+        b.china_name AS regionName,
+        b.region_code AS regionCode,
+        'now' AS timeFlag
+        FROM
+            ( SELECT region_id, china_name, region_code FROM init_region WHERE region_id = #{regionId} ) b
+            LEFT JOIN ds_weather A ON A.region_id = b.region_id
+        WHERE
+            A.ymd BETWEEN to_date( #{startDate}, 'yyyy-MM-dd' )
+            AND to_date( #{endDate}, 'yyyy-MM-dd' )
+            AND A.publish_status = 2201
+        GROUP BY
+            A.region_id,
+            b.china_name,
+            b.region_code UNION
+            SELECT--上期：30天之前时间段内最低温和最高温
+            MAX (
+            to_number( b_wendu, '999999999' )) AS MAXVALUE,
+            MIN (
+            to_number( y_wendu, '999999999' )) AS MINVALUE,
+            A.region_id AS regionId,
+            b.china_name AS regionName,
+            b.region_code AS regionCode,
+            '30daysAgo' AS timeFlag
+        FROM
+            ( SELECT region_id, china_name, region_code FROM init_region WHERE region_id = #{regionId} ) b
+            LEFT JOIN ds_weather A ON A.region_id = b.region_id
+        WHERE
+            A.ymd BETWEEN to_date( #{startDate}, 'yyyy-MM-dd' ) - INTERVAL '30day'
+            AND to_date( #{endDate}, 'yyyy-MM-dd' ) - INTERVAL '30day'
+            AND A.publish_status = 2201
+        GROUP BY
+            A.region_id,
+            b.china_name,
+            b.region_code UNION
+            SELECT--去年同期：一年之前时间段内最低温和最高温
+            MAX (
+            to_number( b_wendu, '999999999' )) AS MAXVALUE,
+            MIN (
+            to_number( y_wendu, '999999999' )) AS MINVALUE,
+            A.region_id AS regionId,
+            b.china_name AS regionName,
+            b.region_code AS regionCode,
+            '1yearAgo' AS timeFlag
+        FROM
+            ( SELECT region_id, china_name, region_code FROM init_region WHERE region_id = #{regionId} ) b
+            LEFT JOIN ds_weather A ON A.region_id = b.region_id
+        WHERE
+            A.ymd BETWEEN to_date( #{startDate}, 'yyyy-MM-dd' ) - INTERVAL '1year'
+            AND to_date( #{endDate}, 'yyyy-MM-dd' ) - INTERVAL '1year'
+            AND A.publish_status = 2201
+        GROUP BY
+            A.region_id,
+            b.china_name,
+            b.region_code UNION
+            SELECT--前年同期：一年之前时间段内最低温和最高温
+            MAX (
+            to_number( b_wendu, '999999999' )) AS MAXVALUE,
+            MIN (
+            to_number( y_wendu, '999999999' )) AS MINVALUE,
+            A.region_id AS regionId,
+            b.china_name AS regionName,
+            b.region_code AS regionCode,
+            '2yearAgo' AS timeFlag
+        FROM
+            ( SELECT region_id, china_name, region_code FROM init_region WHERE region_id = #{regionId} ) b
+            LEFT JOIN ds_weather A ON A.region_id = b.region_id
+        WHERE
+            A.ymd BETWEEN to_date( #{startDate}, 'yyyy-MM-dd' ) - INTERVAL '2year'
+            AND to_date( #{endDate}, 'yyyy-MM-dd' ) - INTERVAL '2year'
+            AND A.publish_status = 2201
+        GROUP BY
+            A.region_id,
+            b.china_name,
+            b.region_code
+    </select>
+    
+    
+    <!--查询当前指定区域在指定时间段内最高温度以及对应的日期-->
+    <select id="findMaxAndDate" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity" >
+        SELECT
+        to_number( A.b_wendu, '999999999' ) AS maxValue,
+        A.region_id AS regionId,
+        b.china_name AS regionName,
+        b.region_code AS regionCode,
+        ymd AS date
+        FROM
+            ( SELECT region_id, china_name, region_code FROM init_region WHERE region_id = #{regionId} ) b
+            LEFT JOIN ds_weather A ON A.region_id = b.region_id
+        WHERE
+            A.ymd BETWEEN to_date( #{startDate}, 'yyyy-MM-dd' )
+            AND to_date( #{endDate}, 'yyyy-MM-dd' )
+            AND A.publish_status = 2201
+        ORDER BY
+            maxValue DESC
+            LIMIT 1
+    </select>
+    
+    <!--查询当前指定区域的下级区域中在指定时间段内最高温度以及对应的日期以及区域信息-->
+    <select id="findUnderAreaMaxDate" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity" >
+        SELECT
+        to_number( A.b_wendu, '999999999' ) AS maxValue,
+        A.region_id AS regionId,
+        b.china_name AS regionName,
+        b.region_code AS regionCode,
+        ymd AS DATE
+        FROM
+            ( SELECT region_id, china_name, region_code FROM init_region WHERE parent_id = #{regionId} ) b
+            LEFT JOIN ds_weather A ON A.region_id = b.region_id
+        WHERE
+            A.ymd BETWEEN to_date( #{startDate}, 'yyyy-MM-dd' )
+            AND to_date( #{endDate}, 'yyyy-MM-dd' )
+            AND A.publish_status = 2201
+        ORDER BY
+            maxValue DESC
+            LIMIT 1
+    </select>
+
+
+    <!--查询当前指定区域在指定时间段内最低温度以及对应的日期-->
+    <select id="findMinAndDate" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity" >
+        SELECT
+        to_number( A.y_wendu, '999999999' ) AS minValue,
+        A.region_id AS regionId,
+        b.china_name AS regionName,
+        b.region_code AS regionCode,
+        ymd AS date
+        FROM
+            ( SELECT region_id, china_name, region_code FROM init_region WHERE region_id = #{regionId} ) b
+            LEFT JOIN ds_weather A ON A.region_id = b.region_id
+        WHERE
+            A.ymd BETWEEN to_date( #{startDate}, 'yyyy-MM-dd' )
+            AND to_date( #{endDate}, 'yyyy-MM-dd' )
+            AND A.publish_status = 2201
+        ORDER BY
+            minValue ASC
+            LIMIT 1
+    </select>
+
+    <!--查询当前指定区域的下级区域中在指定时间段内最低温度以及对应的日期以及区域信息-->
+    <select id="findUnderAreaMinDate" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity" >
+        SELECT
+        to_number( A.y_wendu, '999999999' ) AS minValue,
+        A.region_id AS regionId,
+        b.china_name AS regionName,
+        b.region_code AS regionCode,
+        ymd AS DATE
+        FROM
+            ( SELECT region_id, china_name, region_code FROM init_region WHERE parent_id = #{regionId} ) b
+            LEFT JOIN ds_weather A ON A.region_id = b.region_id
+        WHERE
+            A.ymd BETWEEN to_date( #{startDate}, 'yyyy-MM-dd' )
+            AND to_date( #{endDate}, 'yyyy-MM-dd' )
+            AND A.publish_status = 2201
+        ORDER BY
+            minValue ASC
+            LIMIT 1
+    </select>
+
+    <!--查询开始和结束日期时间段内有气温数据的所有日期-->
+    <select id="findTempTimes" resultType="java.lang.String" parameterType="com.jh.ttn.entity.TtnEntity" >
+        select to_char(ymd,'yyyy-MM-dd') as date from ds_weather where  del_flag='1' and publish_status = 2201
+        <if test="regionId != null" >
+            and  region_id = #{regionId}
+        </if>
+        <if test="startDate != null and endDate != null"  >
+            and  ymd BETWEEN  #{startDate} and #{endDate}
+        </if>
+        order by ymd asc
+    </select>
+
+    <!--查询开始和结束日期时间段内所有气温数据-->
+    <select id="findAllTemp" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity" >
+        select DISTINCT region_id as regionId,to_char(ymd,'yyyy-MM') as dataMonth  from ds_weather where  del_flag='1'  and publish_status = 2201
+        <if test="regionId != null" >
+            and  region_id = #{regionId}
+        </if>
+        <if test="startDate != null and endDate != null"  >
+            and  ymd  BETWEEN  #{startDate} and #{endDate}
+        </if>
+        group by dataMonth, regionId
+        order by regionId,dataMonth desc
+
+
+    </select>
+
+</mapper>

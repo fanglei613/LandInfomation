@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jh.ttn.mapping.IDsTrmmForSevenMapper" >
+
+    <!--
+     *根据区域构造7天降雨数据查询服务
+     *@param TtnEntity : 参数，（区域ID，起止日期）
+     *@return List<TtnVo> : 降雨数据
+     *@Version <1> 2018-06-12 cxw: Created.
+    -->
+    <select id="findTrmmForSeven" resultType="com.jh.ttn.vo.TrmmSevenVo"  parameterType="java.util.LinkedHashMap"  >
+        select  to_char(t.date,'yyyy-MM-dd') as date,t. val,t.region_id,a.avg,b.lastyearavg,c.lastavg ,r.china_name as region_name from (select data_time as date,trmm as val,region_id
+         from ds_trmm where  publish_status = 2201 and region_id in  ( 3100000000,2300000000,2800000000,7300000000,16900000000 )
+         and data_time>= cast(#{now_sdate} as timestamp )    and  cast(#{now_edate} as timestamp )>=data_time) t  left join
+        (select region_id,round(avg(trmm),2) as avg from  ds_trmm where publish_status = 2201 and region_id in  ( 3100000000,2300000000,2800000000,7300000000,16900000000 )
+         and data_time>= cast(#{now_sdate} as timestamp )    and  cast(#{now_edate} as timestamp )>=data_time   group by region_id) a on t.region_id = a.region_id left join
+        (select region_id,round(avg(trmm),2) as lastyearavg from  ds_trmm where publish_status = 2201 and region_id in  ( 3100000000,2300000000,2800000000,7300000000,16900000000 )
+        and   data_time>=cast(#{last_sdate} as timestamp ) and cast(#{last_edate} as timestamp )>=data_time  group by region_id) b on  t.region_id = b.region_id left join
+        (select region_id,round(avg(trmm),2) as lastavg from  ds_trmm where publish_status = 2201 and region_id in  ( 3100000000,2300000000,2800000000,7300000000,16900000000 )
+         and data_time>= cast(#{lastweek_sdate} as timestamp )   and  cast(#{lastweek_edate} as timestamp )>=data_time  group by region_id) c  on  t.region_id = c.region_id
+        left join init_region r on r.region_id = c.region_id order by region_id,date
+    </select>
+
+</mapper>

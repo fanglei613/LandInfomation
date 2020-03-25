@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jh.land.mapping.ILandMapper">
+
+    <!-- 查询乡镇地块统计列表 -->
+    <select id="queryLandStatistics" parameterType="com.jh.land.model.LandParam" resultType="com.jh.land.model.LandVO">
+        SELECT DISTINCT
+            A.region_id AS regionId,
+            B.china_name AS chinaName,
+            A.rank_num AS rankNum,
+            A.area_sum AS areaSum
+        FROM
+            rank_statistics A
+        LEFT JOIN
+            init_region B
+        ON
+            A.region_id = B.region_id
+        WHERE
+            B.parent_id = #{regionId,jdbcType=BIGINT}
+            AND A.data_time BETWEEN #{startDate,jdbcType=DATE} AND #{endDate,jdbcType=DATE}
+        ORDER BY
+            A.region_id
+    </select>
+
+    <!-- 根据行政区划编码分页查询地块列表 -->
+    <select id="queryLandList" parameterType="com.jh.land.model.LandParam" resultType="com.jh.land.entity.LandEntity">
+        SELECT
+        A.rank_id AS rankId,
+        A.rank_code AS rankCode,
+        A.rank_name AS rankName,
+        A.parent_id AS parentId,
+        A.area AS area,
+        A.lon AS lon,
+        A.lat AS lat,
+        A.crop_id AS cropId
+        FROM
+        ${landTableName} A
+        WHERE 1=1
+        <if test="regionId != null">
+            AND A.parent_id = #{regionId,jdbcType=BIGINT}
+        </if>
+        <if test="cropId != null">
+            AND A.crop_id = #{cropId,jdbcType=INTEGER}
+        </if>
+        ORDER BY
+        A.rank_id
+        LIMIT ${rows}
+        <if test="offset != null">
+            OFFSET ${offset}
+        </if>
+    </select>
+
+    <!-- 查询某一乡镇地块的总数 -->
+    <select id="queryLandListSum" resultType="java.lang.Long" parameterType="com.jh.land.model.LandParam">
+        SELECT
+        rank_num
+        FROM rank_statistics
+        WHERE
+        region_id = #{regionId,jdbcType=BIGINT}
+        AND data_time BETWEEN #{startDate,jdbcType=DATE} AND #{endDate,jdbcType=DATE}
+        LIMIT 1
+    </select>
+
+    <!-- 根据点查询相交的地块信息 -->
+    <select id="queryLandInfoByLonLat" parameterType="com.jh.land.model.LandParam"
+            resultType="com.jh.land.entity.LandEntity">
+        SELECT
+        A.rank_id AS rankId,
+        A.rank_code AS rankCode,
+        A.rank_name AS rankName,
+        A.parent_id AS parentId,
+        A.area AS area,
+        A.lon AS lon,
+        A.lat AS lat,
+        A.crop_id AS cropId,
+        ST_ASTEXT(A.bbox) AS "geometry"
+        FROM
+        ${landTableName} A
+        WHERE
+        ST_INTERSECTS(A.bbox,ST_GEOMFROMTEXT('${wkt}'))
+        <if test="regionId != null">
+            AND A.parent_id = #{regionId,jdbcType=BIGINT}
+        </if>
+        LIMIT 1
+    </select>
+
+    <!-- 根据ID查询地块信息 -->
+    <select id="queryLandInfoById" parameterType="com.jh.land.model.LandParam"
+            resultType="com.jh.land.entity.LandEntity">
+        SELECT
+        A.rank_id AS rankId,
+        A.rank_code AS rankCode,
+        A.rank_name AS rankName,
+        A.parent_id AS parentId,
+        A.area AS area,
+        A.lon AS lon,
+        A.lat AS lat,
+        A.crop_id AS cropId,
+        ST_ASTEXT(A.bbox) AS "geometry"
+        FROM
+        ${landTableName} A
+        WHERE
+        A.rank_id = #{rankId,jdbcType=BIGINT}
+    </select>
+
+</mapper>

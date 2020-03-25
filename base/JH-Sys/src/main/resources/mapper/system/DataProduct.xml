@@ -1,0 +1,272 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jh.system.mapping.IDataProductMapper" >
+    
+    
+    <insert id="insertDataProduct" parameterType="DataProduct" useGeneratedKeys="true" keyProperty="productId">
+        INSERT INTO data_product
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="regionId != null">region_id,</if>
+            <if test="datasetId != null">dataset_id,</if>
+            <if test="accuracyId != null">accuracy_id,</if>
+            <if test="cropId != null">crop_id,</if>
+            <if test="productStartDate != null">start_date,</if>
+            <if test="productEndDate != null">end_date,</if>
+            <if test="productType != null">product_type,</if>
+            <if test="defaultShow != null">default_show,</if>
+            <if test="accountId != null">account_id,</if>
+        </trim>
+        <trim prefix=" values (" suffix=")" suffixOverrides=",">
+            <if test="regionId != null">#{regionId},</if>
+            <if test="datasetId != null">#{datasetId},</if>
+            <if test="accuracyId != null">#{accuracyId},</if>
+            <if test="cropId != null">#{cropId},</if>
+            <if test="productStartDate != null">#{productStartDate},</if>
+            <if test="productEndDate != null">#{productEndDate},</if>
+            <if test="productType != null">#{productType},</if>
+            <if test="defaultShow != null">#{defaultShow},</if>
+            <if test="accountId != null">#{accountId},</if>
+        </trim>
+    </insert>
+    
+    <delete id="deleteDataProduct" parameterType="DataProduct">
+        DELETE  FROM data_product WHERE product_id = #{productId} AND account_id = #{accountId}
+    </delete>
+    
+    <update id="updateDataProduct" parameterType="DataProduct">
+        UPDATE data_product
+         <set>
+             <if test="defaultShow != null">default_show = #{defaultShow},</if>
+         </set>
+        <where>
+            <if test="productId != null">
+                product_id = #{productId}
+            </if>
+            <if test="accountId != null">
+                AND account_id = #{accountId}
+            </if>
+        </where>
+    </update>
+    
+    
+    <select id="selectDataProduct" parameterType="DataProduct" resultType="DataProduct">
+        select x.*,c.data_name as cropName from (
+select p.product_id as productId,p.region_id as regionId,p.dataset_id as datasetId,p.accuracy_id as accuracyId,p.crop_id as cropId,p.start_date as startDate,p.end_date as endDate,p.account_id as accountId,
+p.product_type as productType,p.default_show as defaultShow, d.data_name as datasetName,a.data_name as accuracyName,r.china_name as chinaName
+from (select * from data_product where account_id = #{accountId}) as p,init_dict as d,init_dict as a,init_region as r
+ where p.dataset_id = d.dict_id and p.accuracy_id = a.dict_id  and p.region_id = r.region_id
+) x left join init_dict c on x.cropId = c.dict_id order by x.regionId,x.datasetId,x.accuracyId,x.cropId
+    </select>
+    
+    
+    <select id="selectByParam" parameterType="DataProduct" resultType="DataProduct">
+        SELECT product_id as productId,region_id as regionId,dataset_id as datasetId,accuracy_id as accuracyId,crop_id as cropId,start_date as startDate,end_date as endDate,default_show as defaultShow from data_product
+        <where>
+            <if test="productId != null">
+                product_id = #{productId}
+            </if>
+        </where>
+        order by regionId
+    </select>
+
+    <select id="selectByParams" parameterType="DataProduct" resultType="java.lang.Integer">
+        SELECT count(1) from data_product
+        <where>
+            <if test="regionId != null">
+                region_id = #{regionId}
+            </if>
+            <if test="datasetId != null">
+                AND   dataset_id = #{datasetId}
+            </if>
+            <if test="accuracyId != null">
+                AND   accuracy_id = #{accuracyId}
+            </if>
+            <if test="cropId != null">
+                AND    crop_id = #{cropId}
+            </if>
+            <if test="accountId != null">
+                AND   account_id = #{accountId}
+            </if>
+            <if test="startDate != null">
+                AND  #{startDate}>=CAST (start_date as VARCHAR)
+            </if>
+            <if test="endDate != null">
+                AND   CAST (end_date as VARCHAR)>= #{endDate}
+            </if>
+        </where>
+    </select>
+
+    <!--农情遥感部分-->
+
+
+    <!--根据用户账号获取数据权限-->
+    <select id="findProductsByAccountId" parameterType="Integer" resultType="HashMap">
+        select
+        b.product_id AS "productId", b.region_id AS "regionId", b.dataset_id AS "datasetId", b.accuracy_id AS "accuracyId", b.crop_id AS "cropId",
+        b.start_date AS "startDate", b.end_date AS "endDate",  b.default_show AS "defaultShow",b.product_type AS "productType",
+        b.account_id AS "accountId",d.data_name as "accuracyName" , d.data_code as "accuracyCode",d.data_value as "accuracyValue",
+        c.data_name as "datasetName",c.data_code as "datasetCode",
+        e.data_name as "cropName", e.data_code as "cropCode",
+        f.china_name AS "chinaName",f.region_code AS "regionCode",f.region_name AS "regionName",f.level
+        from  data_product b
+        left join init_dict c on b.dataset_id = c.dict_id
+        left join init_dict d on b.accuracy_id = d.dict_id and d.data_status = '1'
+        left join init_dict e on b.crop_id = e.dict_id  and e.data_status = '1'
+        left join init_region f on b.region_id = f.region_id
+        where  c.data_status = '1'  and f.data_status = '1' and  b.data_status = '1' and  b.account_id = #{accountId,jdbcType=INTEGER}
+        order by b.default_show desc
+        /*   ,b.create_time, c.order_no,e.order_no,d.order_no desc*/
+    </select>
+
+
+    <!--
+    /**
+       * 根据区域，作物，数据集，分辨率获取用户权限时间
+       * @param dataProductEntity 数据产品对象
+       * regionId 区域主键
+       * dsId 数据集主键
+       * dataTypeId 分辨率主键
+       * cropId 作物主键
+       * @return
+       * @version <1> 2018-07-05 cxw : Created.
+       */-->
+    <select id="dataTimeForPerm" parameterType="DataProduct" resultType="HashMap">
+        select min(start_Date) startDate,max(end_Date) endDate   from  data_product
+        <where>
+            <if test="regionId != null">
+                region_id = #{regionId}
+            </if>
+            <if test="cropId != null">
+                and  crop_id =  #{cropId}
+            </if>
+            <if test="datasetId != null">
+                and  dataset_id =  #{datasetId}
+            </if>
+            <if test="accuracyId != null">
+                and  accuracy_id =  #{accuracyId}
+            </if>
+            <if test="accountId != null">
+                and account_id = #{accountId}
+            </if>
+        </where>
+    </select>
+
+
+    <!--
+  /**
+     * 根据区域，作物，数据集，分辨率获取用户权限时间
+     * @param dataProductEntity 数据产品对象
+     * regionId 区域主键
+     * dsId 数据集主键
+     * dataTypeId 分辨率主键
+     * cropId 作物主键(当作物为空时)
+     * @return
+     * @version <1> 2018-07-06 cxw : Created.
+     */-->
+    <select id="dataTimeForPermCrop" parameterType="DataProduct" resultType="HashMap">
+        select min(start_Date) startDate,max(end_Date) endDate   from  data_product
+        <where>
+            1=1
+            <if test="cropId != null">
+              and  crop_id = #{cropId}
+            </if>
+            <if test="regionId != null">
+                and  region_id = #{regionId}
+            </if>
+            <if test="datasetId != null">
+                and  dataset_id =  #{datasetId}
+            </if>
+            <if test="accuracyId != null">
+                and  accuracy_id =  #{accuracyId}
+            </if>
+            <if test="accountId != null">
+                and account_id = #{accountId}
+            </if>
+        </where>
+    </select>
+
+
+
+    <!--添加数据产品-->
+    <insert id="addDataProduct" parameterType="DataProduct"   useGeneratedKeys="true" keyProperty="productId">
+        insert into data_product
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="accountId != null" >
+                account_id,
+            </if>
+            <if test="dataStatus != null" >
+                data_status,
+            </if>
+            create_time,
+            <if test="creatorName != null" >
+                creator_name,
+            </if>
+            <if test="creator != null" >
+                creator,
+            </if>
+            <if test="regionId != null" >
+                region_id,
+            </if>
+            <if test="datasetId != null" >
+                dataset_id,
+            </if>
+            <if test="accuracyId != null" >
+                accuracy_id,
+            </if>
+            <if test="cropId != null" >
+                crop_id,
+            </if>
+            <if test="productStartDate != null" >
+                start_date,
+            </if>
+            <if test="productEndDate != null" >
+                end_date,
+            </if>
+            <if test="productType != null" >
+                product_type,
+            </if>
+            <if test="defaultShow != null" >
+                default_show,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="accountId != null" >
+                #{accountId},
+            </if>
+            <if test="dataStatus != null" >
+                #{dataStatus},
+            </if>
+            now(),
+            <if test="creatorName != null" >
+                #{creatorName},
+            </if>
+            <if test="creator != null" >
+                #{creator},
+            </if>
+            <if test="regionId != null" >
+                #{regionId},
+            </if>
+            <if test="datasetId != null" >
+                #{datasetId},
+            </if>
+            <if test="accuracyId != null" >
+                #{accuracyId},
+            </if>
+            <if test="cropId != null" >
+                #{cropId},
+            </if>
+            <if test="productStartDate != null" >
+                #{productStartDate},
+            </if>
+            <if test="productEndDate != null" >
+                #{productEndDate},
+            </if>
+            <if test="productType != null" >
+                #{productType},
+            </if>
+            <if test="defaultShow != null" >
+                #{defaultShow},
+            </if>
+        </trim>
+    </insert>
+</mapper>

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jh.ttn.mapping.IDsWeatherMapper" >
+
+
+    <!--根据区域、起止日期查询日期段内区域及下一级区域的天气预报数据-->
+    <select id="findWeatherRegionAndBeyond" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity"  >
+         SELECT
+            data_time AS DATE,
+            CAST ( max_temp AS FLOAT ) AS MAXVALUE,
+            CAST ( min_temp AS FLOAT ) AS MINVALUE,
+            region_id AS regionId,
+            china_name AS regionName,
+            remark AS remark,
+            weather AS weather
+        FROM
+            ds_weather_prediction
+        WHERE
+            region_id = #{regionId}
+            OR parent_id = #{regionId}
+        ORDER BY
+            data_time,
+            regionId
+    </select>
+
+
+    <!--根据区域、起止时间查询时间段内该区域的天气预报数据-->
+    <select id="findRegionWeather" resultType="com.jh.ttn.vo.TtnVo" parameterType="com.jh.ttn.entity.TtnEntity"  >
+       SELECT
+            data_time AS DATE,
+            CAST ( max_temp AS FLOAT ) AS MAXVALUE,
+            CAST ( min_temp AS FLOAT ) AS MINVALUE,
+            region_id AS regionId,
+            china_name AS regionName,
+            remark AS remark,
+            weather AS weather
+        FROM
+            ds_weather_prediction
+        WHERE
+            region_id = #{regionId}
+            AND data_time BETWEEN to_date(#{startDate},'yyyy-MM-dd')
+            AND to_date(#{endDate},'yyyy-MM-dd')
+        ORDER BY
+            data_time,
+            regionId
+    </select>
+
+
+
+</mapper>

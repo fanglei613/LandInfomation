@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jh.system.mapping.IRegionAndCropMapper" >
+
+    <!--
+     *批量新增区域与作物关联
+     * regionId 区域ID
+     * cropId 作物ID
+     * <1> 2018-1-24 cxw: Created.
+    -->
+    <insert id="addRegionAndCropRelateData" parameterType="java.util.List">
+        insert into ds_relate_crop_region (region_id, crop_id)  values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.regionId,jdbcType=BIGINT}, #{item.cropId,jdbcType=INTEGER})
+        </foreach>
+    </insert>
+
+    <!--
+    *批量删除区域与作物关联
+     * regionId 区域ID
+     * cropId 作物ID
+     * <1> 2018-1-26 cxw: Created.
+       * <2> 2018-8-7 wl: updated.
+    -->
+    <delete id="delRegionAndCropRelateData" parameterType="java.util.List">
+        delete from  ds_relate_crop_region where region_id in
+        <foreach item="regionIds" collection="list" open="(" close=")" separator=",">
+            #{regionIds}
+        </foreach>
+    </delete>
+
+
+</mapper>

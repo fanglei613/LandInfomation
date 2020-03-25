@@ -1,0 +1,56 @@
+#application port and name
+spring:
+  application:
+    name: JH-DS-Ttn
+  datasource:
+    url: jdbc:postgresql://192.168.1.223:5432/ground
+    username: postgres
+    password: pgdev2019
+
+#    url: jdbc:postgresql://192.168.1.223:5433/ground_pro
+#    username: postgres
+#    password: pgtest2018
+    driver-class-name: org.postgresql.Driver
+# druid datasoure
+    type: com.alibaba.druid.pool.DruidDataSource
+    maxActive: 20
+    initialSize: 1
+    maxWait: 60000
+    minIdle: 1
+    timeBetweenEvictionRunsMillis: 60000
+    minEvictableIdleTimeMillis: 300000
+    validationQuery: select 'x'
+    testWhileIdle: true
+    testOnBorrow: false
+    testOnReturn: false
+    poolPreparedStatements: true
+    maxOpenPreparedStatements: 20
+mybatis:
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: cn.datall.cloud.ttn.entity
+  configuration:
+      call-setters-on-nulls: true
+endpoints:
+  shutdown:
+    enabled: true
+    sensitive: false
+
+server:
+  port: 8003
+
+#register server 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8000/eureka
+
+
+#log
+logging:
+  file: ../logs/${spring.application.name}.log
+  level:
+    com.jh: DEBUG
+    org:
+      springframework:
+        boot: info
+

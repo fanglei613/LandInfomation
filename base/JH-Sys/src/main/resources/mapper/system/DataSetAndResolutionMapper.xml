@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jh.system.mapping.IDataSetAndResolutionMapper" >
+    <resultMap id="BaseResultMap" type="com.jh.system.entity.RelateDataSetResolution" >
+        <result column="data_set_id" property="dataSetId" jdbcType="INTEGER" />
+        <result column="resolution_id" property="resolutionId" jdbcType="INTEGER" />
+        <result column="data_set_name" property="dataSetName" jdbcType="VARCHAR" />
+        <result column="resolution_name" property="resolutionName" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <sql id="Base_Column_List" >
+        data_set_id,
+	    (select data_name from init_dict where data_status = '1' and del_flag = '1' and parent_id = 1800 and dict_id = data_set_id) as data_set_name,
+	    resolution_id,
+	    (select data_name from init_dict where data_status = '1' and del_flag = '1' and parent_id = 4000 and dict_id = resolution_id) as resolution_name
+    </sql>
+
+    <select id="queryResolutionListByDataSetId" resultMap="BaseResultMap" parameterType="Integer">
+        select
+          <include refid="Base_Column_List" />
+        from ds_relate_dataSet_resolution
+        where data_set_id = #{dataSetId, jdbcType=INTEGER}
+        order by data_set_id, resolution_id
+    </select>
+
+    <!--
+      * Description: 查询数据集精度列表
+     * @param
+     * @return 数据精度列表
+     * @version <1> 2019-03-13  cxw: Created.
+    -->
+    <select id="findDsResolutionList" resultMap="BaseResultMap" >
+        select
+        <include refid="Base_Column_List" />
+        from ds_relate_dataSet_resolution
+        order by data_set_id, resolution_id
+    </select>
+
+    <!--
+    *批量新增数据集与精度关联
+    * data_set_id 数据集ID
+    * resolution_id 精度ID
+    * <1> 2018-08-31 huxiaoqiang: Created.
+   -->
+    <insert id="addDatasetAndResolutionRelateData" parameterType="java.util.List">
+        insert into ds_relate_dataset_resolution (data_set_id, resolution_id)  values
+        <foreach collection="list" item="item" index="index" separator=",">
+            (#{item.dataSetId,jdbcType=INTEGER}, #{item.resolutionId,jdbcType=INTEGER})
+        </foreach>
+    </insert>
+
+    <!--
+    *批量删除数据集与精度关联
+    * data_set_id 数据集ID
+    * resolution_id 精度ID
+    * <1> 2018-08-31 huxiaoqiang: Created.
+    -->
+    <delete id="delDatasetAndResolutionRelateData" parameterType="java.lang.Integer">
+        delete from  ds_relate_dataset_resolution where data_set_id = #{dataSetId}
+    </delete>
+
+
+
+
+
+</mapper>

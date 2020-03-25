@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>  
+<!DOCTYPE generatorConfiguration  
+  PUBLIC "-//mybatis.org//DTD MyBatis Generator Configuration 1.0//EN"  
+  "http://mybatis.org/dtd/mybatis-generator-config_1_0.dtd">  
+<generatorConfiguration>  
+    <classPathEntry  location="C:\Users\pc002\Desktop\entity\postgresql-9.4.1212.jre7.jar"/>
+    <context id="DB2Tables"  targetRuntime="MyBatis3">  
+        <commentGenerator>  
+            <property name="suppressDate" value="true"/>  
+            <property name="suppressAllComments" value="false"/>  
+        </commentGenerator>  
+        <jdbcConnection driverClass="org.postgresql.Driver" connectionURL="jdbc:postgresql://192.168.1.223:5432/yangfang" userId="postgres" password="pgdev2019">
+        </jdbcConnection>  
+        <javaTypeResolver>  
+            <property name="forceBigDecimals" value="false"/>  
+        </javaTypeResolver>  
+        <javaModelGenerator targetPackage="com.jh.rank.system.entity" targetProject="src">
+            <property name="enableSubPackages" value="true"/>  
+            <property name="trimStrings" value="true"/>  
+        </javaModelGenerator>  
+        <sqlMapGenerator targetPackage="resource" targetProject="src">  
+            <property name="enableSubPa ckages" value="true"/>
+        </sqlMapGenerator>  
+        <javaClientGenerator type="XMLMAPPER" targetPackage="com.jh.rank.system.entity" targetProject="src">
+            <property name="enableSubPackages" value="true"/>  
+        </javaClientGenerator>  
+        <table tableName="rank_area_times" domainObjectName="RankAreaTimes" enableCountByExample="false" enableUpdateByExample="false" enableDeleteByExample="false" enableSelectByExample="true" selectByExampleQueryId="false"></table>
+    </context>
+</generatorConfiguration>  

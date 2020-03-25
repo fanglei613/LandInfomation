@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jh.system.mapping.ICropMapper" >
+
+    <!--
+  * 根据区域查询作物
+  * @param regionId
+  * @return
+  *@version <1> 2017-12-06 cxw : Created.
+  -->
+    <select id="findCropList" resultType="HashMap"  parameterType="java.lang.Long">
+       select b.data_name as "cropName",b.data_code as "cropCode",b.dict_id as "cropId"  from ds_relate_crop_region a
+        join init_dict b on a.crop_id = b.dict_id and b.data_status = '1' and a.region_id = #{regionId} ORDER BY b.order_no ASC
+    </select>
+
+
+</mapper>

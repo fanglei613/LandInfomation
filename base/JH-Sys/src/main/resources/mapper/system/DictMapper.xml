@@ -1,0 +1,335 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jh.system.mapping.IDictMapper" >
+    <resultMap id="BaseResultMap" type="com.jh.system.entity.Dict" >
+        <id column="dict_id" property="dictId" jdbcType="INTEGER" />
+        <result column="data_status" property="dataStatus" jdbcType="CHAR" />
+        <result column="del_flag" property="delFlag" jdbcType="CHAR" />
+        <result column="create_time" property="createTime" jdbcType="DATE" />
+        <result column="creator_name" property="creatorName" jdbcType="VARCHAR" />
+        <result column="creator" property="creator" jdbcType="INTEGER" />
+        <result column="modify_time" property="modifyTime" jdbcType="DATE" />
+        <result column="modifier_name" property="modifierName" jdbcType="VARCHAR" />
+        <result column="modifier" property="modifier" jdbcType="INTEGER" />
+        <result column="remark" property="remark" jdbcType="VARCHAR" />
+        <result column="data_name" property="dataName" jdbcType="VARCHAR" />
+        <result column="data_code" property="dataCode" jdbcType="VARCHAR" />
+        <result column="data_value" property="dataValue" jdbcType="VARCHAR" />
+        <result column="order_no" property="orderNo" jdbcType="SMALLINT" />
+        <result column="is_leaf" property="leaf" jdbcType="BIT" />
+        <result column="parent_id" property="parentId" jdbcType="INTEGER" />
+        <result column="data_type" property="dataType" jdbcType="CHAR" />
+        <result column="parent_Name" property="parentName" />
+    </resultMap>
+
+    <sql id="Base_Column_List" >
+        dict_id, data_name, data_code, data_value, order_no, is_leaf,parent_id,data_type
+    </sql>
+
+    <sql id="Full_Base_Column_List" >
+        dict_id  ,  remark ,  data_status ,  create_time ,  creator_name,  creator,  modify_time,  modifier_name ,
+        modifier ,  data_name ,  data_code ,  data_value ,  order_no ,  is_leaf ,   parent_id, data_type, del_flag
+    </sql>
+
+    <!--
+     *查询数据字典所有数据
+     * @return Dict
+     * @version <1> 2017-12-15 cxw: Created.
+     -->
+    <select id="findDictList" resultType="DictTreeReturn" >
+        select  dict_id as id,data_name as name, parent_id as pId from  init_dict where del_flag = '1' order by dict_id,order_no
+    </select>
+
+    <!--
+     *  根据父ID查询子节点
+     * @return Dict
+     * @version  <1> 2017-12-27 cxw : Created.:
+     *-->
+    <select id="findDictListByPid" resultType="DictTreeReturn" parameterType="java.lang.Long" >
+        select   dict_id as id,data_name as name, parent_id as pId  from  init_dict
+        where    parent_id=#{parentId} and del_flag = '1' order by  order_no asc
+    </select>
+
+    <!-- *根据id查询数据字典数据
+    * @param id 主键
+    * @return Dict
+    * @version <1> 2017-12-15 cxw: Created.-->
+    <select id="findDictById" resultType="DictParam" parameterType="java.lang.Integer" >
+        select   a.dict_id as dictId,  a.remark  as remark,  a.data_status as dataStatus,  a.create_time as createTime ,  a.creator_name as creatorName,  a.creator as creator,  a.modify_time as modifyTime,  a.modifier_name as modifierName ,
+        a.modifier as modifier,  a.data_name  as dataName,  a.data_code as dataCode ,  a.data_value as dataValue ,  a.order_no  as orderNo,  a.is_leaf as leaf ,   a.parent_id as parentId,b.data_name  as parentName
+        from  init_dict a  left join  init_dict b on a.parent_id = b.dict_id  where    a.dict_id =#{dictId}
+    </select>
+
+    <!--
+        根据parent_id获取字典列表
+        @version <1> 2018-01-18 cxj:Created.
+    -->
+    <select id="queryDictByParentId" resultMap="BaseResultMap" parameterType="Dict">
+        select <include refid="Base_Column_List" /> from init_dict where del_flag = '1' and data_status='1' and  parent_id = #{parentId}  order by  order_no asc
+    </select>
+
+    <!--
+       获取所有字典列表
+       @version <1> 2018-01-18 cxj:Created.
+   -->
+    <select id="findAllDictList" resultMap="BaseResultMap" >
+        select <include refid="Base_Column_List" /> from init_dict where del_flag = '1' and data_status='1'
+    </select>
+
+    <!--
+        根据parent_id集合获取字典列表
+        @version <1> 2018-01-18 cxj:Created.
+    -->
+    <select id="queryDictByParentIdList" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List" /> from init_dict
+        where parent_id in
+        <foreach collection="list" item="parentId" open="(" close=")" separator=",">
+            #{parentId}
+        </foreach>
+    </select>
+
+    <select id="getById" resultMap="BaseResultMap" parameterType="java.lang.Integer" >
+        select
+        <include refid="Full_Base_Column_List" />
+        from init_dict
+        where dict_id = #{dictId,jdbcType=INTEGER}
+    </select>
+
+    <delete id="delete" parameterType="java.lang.Integer" >
+        delete from init_dict
+        where dict_id = #{dictId,jdbcType=INTEGER}
+    </delete>
+
+    <!--*添加数据字典数据
+     * @param dict 数据字典对象
+     * @return int 添加成功返回主键，失败返回0
+     * @version <1> 2017-12-15 cxw: Created.-->
+    <insert id="addDict" parameterType="DictParam" useGeneratedKeys="true" keyProperty="dictId">
+        insert into  init_dict
+        <trim prefix="(" suffix=")" suffixOverrides="," >
+            <if test="dictId != null" > dict_id, </if>
+            <if test="remark != null" > remark,  </if>
+            <if test="dataStatus != null" > data_status, </if>
+            create_time,
+            <if test="creatorName != null" >creator_name,</if>
+            <if test="creator != null" >creator,</if>
+            <if test="dataName != null" >data_name,</if>
+            <if test="dataCode != null" >data_code,</if>
+            <if test="dataValue != null" >data_value,</if>
+            <if test="orderNo != null" >order_no,</if>
+            <if test="leaf != null" >is_leaf,</if>
+            <if test="parentId != null" > parent_id,</if>
+            <if test="dataType != null" > data_type</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides="," >
+            <if test="dictId != null" > #{dictId}, </if>
+            <if test="remark != null" > #{remark}, </if>
+            <if test="dataStatus != null" > #{dataStatus}, </if>
+            now(),
+            <if test="creatorName != null" > #{creatorName}, </if>
+            <if test="creator != null" > #{creator}, </if>
+            <if test="dataName != null" > #{dataName},</if>
+            <if test="dataCode != null" > #{dataCode},</if>
+            <if test="dataValue != null" > #{dataValue}, </if>
+            <if test="orderNo != null" >  #{orderNo}, </if>
+            <if test="leaf != null" > #{leaf},  </if>
+            <if test="parentId != null" > #{parentId}, </if>
+            <if test="dataType != null" > #{dataType}</if>
+        </trim>
+    </insert>
+
+    <!--*修改数据字典数据
+    * @param dict 数据字典对象
+    * @return int 修改成功返回1，失败返回0
+    * @version <1> 2017-12-15 cxw: Created.-->
+    <update id="editDict" parameterType="DictParam" >
+        update init_dict
+        <set >
+            <if test="remark != null" > remark = #{remark}, </if>
+            <if test="dataStatus != null" > data_status = #{dataStatus},</if>
+            modify_time = now(),
+            <if test="modifierName != null" > modifier_name = #{modifierName},</if>
+            <if test="modifier != null" > modifier = #{modifier}, </if>
+            <if test="dataName != null" > data_name = #{dataName}, </if>
+            <if test="dataCode != null" > data_code = #{dataCode}, </if>
+            <if test="dataValue != null" > data_value = #{dataValue}, </if>
+            <if test="orderNo != null" > order_no = #{orderNo}, </if>
+            <if test="leaf != null" > is_leaf = #{leaf}, </if>
+            <if test="delFlag != null" > del_flag = #{delFlag}, </if>
+            <if test="parentId != null" > parent_id = #{parentId}, </if>
+        </set>
+        where dict_id = #{dictId}
+    </update>
+
+    <!-- 修改指定父节点下子节点的数据 -->
+    <update id="editDictStatusByParentId" parameterType="DictParam" >
+        update init_dict
+        <set >
+            <if test="dataStatus != null" >data_status = #{dataStatus},</if>
+        </set>
+        where parent_id = #{dictId}
+    </update>
+
+    <!--
+        查询下载配置中的所有数据分类
+        @version <1> 2018/2/5 djh： Created.
+     -->
+    <select id="queryDataType" resultType="DictParam" >
+        select dict_id as dictId,data_name as dataName from public.init_dict
+        where del_flag = '1' and parent_id = '7000'
+        order by  order_no asc
+    </select>
+
+    <!--
+        查询指定字典主键是否存在
+        @version <1> 2018-02-11 djh： Created.
+     -->
+    <select id="checkDictIdIsExists" resultType="int" parameterType="int" >
+        select count(*) c from public.init_dict
+        where dict_id = #{dictId,jdbcType=INTEGER}
+    </select>
+
+    <!--
+        查询指定字典编码是否存在
+        @version <1> 2018-02-11 djh： Created.
+     -->
+    <select id="checkDictCodeIsExists" resultType="java.lang.Integer" parameterType="string">
+        select count(*) num from init_dict
+        where data_code = #{dataCode,jdbcType=VARCHAR}
+    </select>
+
+
+    <!--*根据编码查询出id，然后根据查询出的id匹配父ID查询出所有字典信息
+    * @param dataCode 数据字典编码
+    * @return DictParam
+    * @version <1> 2018-03-06 cxw: Created.-->
+    <select id="findDictByCode" resultType="DictParam" parameterType="java.lang.String">
+        select dict_id as dictId,data_name as dataName,data_value as dataValue,data_code as dataCode from init_dict
+        where del_flag = '1' and  data_status = '1' and parent_id =  (select dict_id from init_dict where data_code = #{dataCode})
+        order by order_no asc
+    </select>
+
+    <!--
+   根据父ID查询子节点
+   @version <1> 2018/1/30 djh： Created.
+    -->
+
+
+    <select id="querySubDictListByParentId" resultType="DictParam" parameterType="integer">
+        select dict_id as dictId,data_name as dataName,data_code as dataCode,data_value as dataValue, parent_id as parentId from init_dict
+        where del_flag = '1' and data_status = '1' and parent_id=#{parentId}
+        order by order_no asc
+    </select>
+    <!--
+  根据区域id查询字典农作物信息
+  @version <1> 2018-05-20 wl： Created.
+   -->
+    <select id="findCropByRegionId" resultType="DictParam" parameterType="integer">
+        select dict_id as dictId,data_name as dataName,data_value as dataValue, parent_id as parentId from init_dict
+        where exists (select null from ds_relate_crop_region where region_id=#{regionId} and init_dict.dict_id=ds_relate_crop_region.crop_id);
+    </select>
+
+    <select id="findDictListByDName" resultMap="BaseResultMap" parameterType="Dict">
+        select
+          <include refid="Base_Column_List" />
+        from init_dict where del_flag = '1' and data_status='1'
+        <if test="dictId != null">
+            and dict_id = #{dictId, jdbcType=INTEGER}
+        </if>
+        <if test="dataName != null">
+            and data_name = #{dataName, jdbcType=VARCHAR}
+        </if>
+        <if test="dataCode != null">
+            and data_code = #{dataCode, jdbcType=VARCHAR}
+        </if>
+        <if test="parentId != null">
+            and parent_id = #{parentId, jdbcType=INTEGER}
+        </if>
+    </select>
+
+
+
+
+
+
+    <!--农情遥感-->
+    <select id="findDictByName" parameterType="java.util.List" resultMap="BaseResultMap">
+        SELECT dict_id,data_name FROM  init_dict
+        WHERE
+        <foreach collection="list" item="name" separator="or">
+            data_name like '%'||#{name}||'%'
+        </foreach>
+    </select>
+
+
+    <select id="findAccuracyByDsId" resultType="HashMap" parameterType="HashMap">
+        SELECT b.dict_id as "dictId",b.data_name as "dataName",b.data_code as "dataCode",b.data_value as "dataValue"
+        FROM ds_relate_dataset_accuracy a join init_dict b on a.accuracy_id = b.dict_id
+        <where>
+            <if test="datasetId != null">
+                a.dataset_id = #{datasetId}
+            </if>
+            <if test="dataStatus != null">
+                AND b.data_status = #{dataStatus}
+            </if>
+            <if test="delFlag != null">
+                AND b.del_flag = #{delFlag}
+            </if>
+        </where>
+        ORDER BY b.order_no ASC
+    </select>
+
+    <select id="findDictByParam" parameterType="HashMap" resultType="HashMap">
+        SELECT dict_id as "dictId",data_name as "dataName",data_code as "dataCode",data_value as "dataValue" FROM init_dict
+        <where>
+            <if test="parentId != null">
+                parent_id = #{parentId}
+            </if>
+            <if test="dataStatus != null">
+                AND data_status = #{dataStatus}
+            </if>
+            <if test="delFlag != null">
+                AND del_flag = #{delFlag}
+            </if>
+        </where>
+        ORDER BY order_no ASC
+    </select>
+
+
+    <!--
+        * 根据数据代码查询数据字典，如有其关联数据则加入关联数据（如区域与作物关联）
+        * 在配置区域与作物时显示某一区域对应的所有作物，且该区域已分配的作物复选框勾选
+        * <1> 2018-1-26 cxw: Created.
+       -->
+    <select id="findAllCropByRegionId" resultType="com.jh.system.model.DictDataReturn" parameterType="com.jh.system.entity.RelateCropRegion">
+        select  a.dict_id dictId,a.data_name dataName,b.crop_id dataId from init_dict  a  left join
+        ds_relate_crop_region b on  b.crop_id = a.dict_id and  b.region_id = #{regionId}  where  a.data_status = '1' and a.del_flag = '1'
+        and a.parent_id = #{parentIds}
+    </select>
+
+
+    <!--根据数据集id和精度id查询某数据集绑定的精度-->
+    <select id="findAllResolutionByDatasetId" resultType="com.jh.system.model.DictDataReturn" parameterType="com.jh.system.entity.RelateDataSetResolution">
+        SELECT
+            a.dict_id dictId,
+            a.data_name dataName,
+            b.resolution_id dataId
+        FROM
+            init_dict a
+            LEFT JOIN ds_relate_dataset_resolution b ON b.resolution_id = a.dict_id
+            AND b.data_set_id = #{dataSetId}  where  a.data_status = '1' and a.del_flag = '1'
+            AND a.parent_id = #{parentIds}
+        ORDER BY dataName
+    </select>
+
+    <!--
+       根据data_code获取字典详情
+       @version <1> 2018-01-18 cxj:Created.
+   -->
+    <select id="queryDictByCode" resultMap="BaseResultMap" parameterType="Dict">
+        select <include refid="Base_Column_List" /> from init_dict where del_flag = '1' and data_status='1' and  data_code = #{dataCode}
+    </select>
+
+
+
+</mapper>

@@ -1,0 +1,770 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jh.land.mapping.IAreaMapper">
+    <resultMap id="BaseResultMap" type="com.jh.land.entity.Area">
+        <id column="id" jdbcType="INTEGER" property="id"/>
+        <result column="data_status" jdbcType="CHAR" property="dataStatus"/>
+        <result column="del_flag" jdbcType="CHAR" property="delFlag"/>
+        <result column="create_time" jdbcType="DATE" property="createTime"/>
+        <result column="creator_name" jdbcType="VARCHAR" property="creatorName"/>
+        <result column="creator" jdbcType="INTEGER" property="creator"/>
+        <result column="modify_time" jdbcType="DATE" property="modifyTime"/>
+        <result column="modifier_name" jdbcType="VARCHAR" property="modifierName"/>
+        <result column="modifier" jdbcType="INTEGER" property="modifier"/>
+        <result column="remark" jdbcType="VARCHAR" property="remark"/>
+        <result column="publish_status" jdbcType="INTEGER" property="publishStatus"/>
+        <result column="publish_time" jdbcType="DATE" property="publishTime"/>
+        <result column="publisher_name" jdbcType="VARCHAR" property="publisherName"/>
+        <result column="publisher" jdbcType="INTEGER" property="publisher"/>
+        <result column="region_id" jdbcType="BIGINT" property="regionId"/>
+        <result column="crop_id" jdbcType="INTEGER" property="cropId"/>
+        <result column="area" jdbcType="NUMERIC" property="area"/>
+        <result column="data_time" jdbcType="DATE" property="dataTime"/>
+        <result column="resolution" jdbcType="INTEGER" property="resolution"/>
+    </resultMap>
+
+    <sql id="Base_Column_List">
+    id, data_status, del_flag, create_time, creator_name, creator, modify_time, modifier_name,
+    modifier, remark, publish_status, publish_time, publisher_name, publisher, region_id, 
+    crop_id, area, data_time, resolution
+  </sql>
+
+    <!--根据主键id查询分布详情-->
+    <select id="findById" parameterType="java.lang.Integer" resultType="com.jh.land.entity.Area">
+    select area.id as id,area.area as area ,area.region_id as regionId, area.crop_id as cropId,
+    area.publisher_name as publisherName,area.publish_status as publishStatus,
+    area.publish_time as publishTime,area.data_time as dataTime,area.resolution as resolution,area.remark as remark
+    from ds_area area
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+
+    <!--修改发布状态-->
+    <update id="publishStatus" parameterType="com.jh.land.model.AreaVO">
+        update ds_area
+        <set>
+            <if test="publishStatus != null">publish_status = #{publishStatus},</if>
+            publish_time = now(),
+            <if test="publisherName != null">publisher_name = #{publisherName},</if>
+            <if test="publisher != null">publisher = #{publisher},</if>
+        </set>
+        where id in
+        <foreach collection="idList" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </update>
+
+    <!-- 分布数据分页查询 -->
+    <select id="findWithPage" resultType="com.jh.land.model.AreaVO" parameterType="com.jh.land.model.AreaVO">
+        select area.id as id,area.area as area ,area.region_id as regionId, area.crop_id as cropId,
+        area.publisher_name as publisherName,area.publish_status as publishStatus,
+        area.publish_time as publishTime,area.data_time as dataTime,area.resolution as resolution
+        from ds_area area left join init_region region on area.region_id = region.region_id where area.del_flag = '1'
+        and area.data_status = '1'
+
+        <if test="regionCode!=null and regionCode!=''">
+            AND region.region_code like #{regionCode,jdbcType=VARCHAR} || '%'
+        </if>
+
+        <if test="resolution != null and resolution != '' ">
+            AND area.resolution = #{resolution,jdbcType=BIGINT}
+        </if>
+
+        <if test="publisherName != null and publisherName != '' ">
+            AND area.publisher_name like CONCAT('%', #{publisherName}, '%')
+        </if>
+
+        <if test="publishStatus != null and publishStatus != '' ">
+            AND area.publish_status = #{publishStatus,jdbcType=BIGINT}
+        </if>
+
+        <if test="cropId != null and cropId != '' ">
+            AND area.crop_id = #{cropId,jdbcType=BIGINT}
+        </if>
+
+        <if test="startTime != null and startTime != '' and endTime != null and endTime != ''">
+            and area.data_time BETWEEN CAST((#{startTime} || ' 00:00:00') AS TIMESTAMP)AND CAST((#{endTime} || '
+            23:59:59') AS TIMESTAMP)
+        </if>
+
+        ORDER BY
+        <choose>
+            <when test="sidx != null and sidx != ''">
+                ${sidx} ${sord}
+            </when>
+            <otherwise>
+                area.publish_status desc,
+                area.create_time DESC
+            </otherwise>
+        </choose>
+
+    </select>
+
+    <!--根据条件查询分布数据的时间点集合-->
+    <select id="findAreaTimes" resultType="java.lang.String" parameterType="com.jh.land.model.AreaVO">
+        select
+        DISTINCT(data_time)
+        from ds_area d,init_region r
+        where d.del_flag='1'
+        and d.data_status='1'
+        AND d.region_id = r.region_id
+        and publish_status = 2201
+        <if test="regionId != null">
+            and (r.region_id = #{regionId} OR r.parent_id = #{regionId})
+        </if>
+        <if test="cropId != null">
+            and crop_id = #{cropId}
+        </if>
+        <if test="resolution != null">
+            and resolution = #{resolution}
+        </if>
+        <if test="startDate != null and endDate != null">
+            and data_time BETWEEN #{startDate} and #{endDate}
+        </if>
+        order by data_time asc
+    </select>
+
+    <select id="findRankAreaTimes" resultType="java.lang.String" parameterType="com.jh.land.model.AreaVO">
+        SELECT DISTINCT
+        (d.data_time)
+        FROM
+        ds_area d,
+        init_rank r
+        WHERE
+        d.del_flag = '1'
+        AND d.data_status = '1'
+        AND d.region_id = r.rank_id
+        AND publish_status = 2201
+        <if test="regionId != null">
+            and (r.parent_id =#{regionId} or r.parent_id in (select region_id from init_region where del_flag='1' and
+            data_status='1' and parent_id=#{regionId}))
+        </if>
+        <if test="cropId != null">
+            and d.crop_id = #{cropId}
+        </if>
+        <if test="resolution != null">
+            and d.resolution = #{resolution}
+        </if>
+        <if test="startDate != null and endDate != null">
+            and d.data_time BETWEEN #{startDate} and #{endDate}
+        </if>
+        order by d.data_time asc
+    </select>
+
+    <!--查询最近的时间-->
+    <select id="queryLatestThreeYearTime" resultType="java.lang.String" parameterType="com.jh.land.model.AreaVO">
+        SELECT
+        max( data_time )
+        FROM
+        ds_area
+        WHERE
+        del_flag = '1'
+        AND data_status = '1'
+        AND publish_status = 2201
+        AND (
+        extract( YEAR FROM data_time ) = extract( YEAR FROM CURRENT_DATE )
+        OR extract( YEAR FROM data_time ) = extract( YEAR FROM CURRENT_DATE ) - 1
+        OR extract( YEAR FROM data_time ) = extract( YEAR FROM CURRENT_DATE ) - 2
+        )
+        <if test="regionId != null">
+            and region_id = #{regionId}
+        </if>
+        <if test="cropId != null">
+            and crop_id = #{cropId}
+        </if>
+        GROUP BY
+        extract( YEAR FROM data_time )
+        order by max( data_time ) desc
+    </select>
+
+    <!--根据数据时间查询选中区域及其下级区域某一期的分布数据-->
+    <select id="findRegionAndAreaByDataTime" parameterType="com.jh.land.model.AreaVO"
+            resultType="com.jh.land.model.AreaVO">
+        SELECT
+        r.china_name chinaName,d.area area, r.region_code as regionCode,r.region_name as regionName,r.region_id as
+        regionId,
+        d.crop_id as cropId,d.data_time as dataTime
+        FROM
+        ds_area d,
+        init_region r
+        WHERE
+        d.region_id = r.region_id
+        AND d.del_flag = '1'
+        AND d.data_status = '1'
+        AND d.publish_status = 2201
+        <if test="dataTime != null">
+            AND d.data_time = #{dataTime,jdbcType=DATE}
+        </if>
+        <if test="cropId != null">
+            AND crop_id = #{cropId,jdbcType=INTEGER}
+        </if>
+        <if test="regionId != null">
+            AND (r.parent_id = #{regionId,jdbcType=BIGINT} or r.region_id = #{regionId,jdbcType=BIGINT})
+        </if>
+        order by r.region_id
+    </select>
+
+
+    <!--根据主键查询分布详情-->
+    <select id="getById" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        SELECT
+        <include refid="Base_Column_List"/>
+        FROM ds_area
+        where id = #{id,jdbcType=INTEGER}
+    </select>
+
+    <!--新增单条分布数据-->
+    <insert id="save" parameterType="com.jh.land.entity.Area">
+        insert into ds_area
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                id,
+            </if>
+            <if test="dataStatus != null">
+                data_status,
+            </if>
+            <if test="delFlag != null">
+                del_flag,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+            <if test="creatorName != null">
+                creator_name,
+            </if>
+            <if test="creator != null">
+                creator,
+            </if>
+            <if test="modifyTime != null">
+                modify_time,
+            </if>
+            <if test="modifierName != null">
+                modifier_name,
+            </if>
+            <if test="modifier != null">
+                modifier,
+            </if>
+            <if test="remark != null">
+                remark,
+            </if>
+            <if test="publishStatus != null">
+                publish_status,
+            </if>
+            <if test="publishTime != null">
+                publish_time,
+            </if>
+            <if test="publisherName != null">
+                publisher_name,
+            </if>
+            <if test="publisher != null">
+                publisher,
+            </if>
+            <if test="regionId != null">
+                region_id,
+            </if>
+            <if test="cropId != null">
+                crop_id,
+            </if>
+            <if test="area != null">
+                area,
+            </if>
+            <if test="dataTime != null">
+                data_time,
+            </if>
+            <if test="resolution != null">
+                resolution,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="id != null">
+                #{id,jdbcType=INTEGER},
+            </if>
+            <if test="dataStatus != null">
+                #{dataStatus,jdbcType=CHAR},
+            </if>
+            <if test="delFlag != null">
+                #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="createTime != null">
+                #{createTime,jdbcType=DATE},
+            </if>
+            <if test="creatorName != null">
+                #{creatorName,jdbcType=VARCHAR},
+            </if>
+            <if test="creator != null">
+                #{creator,jdbcType=INTEGER},
+            </if>
+            <if test="modifyTime != null">
+                #{modifyTime,jdbcType=DATE},
+            </if>
+            <if test="modifierName != null">
+                #{modifierName,jdbcType=VARCHAR},
+            </if>
+            <if test="modifier != null">
+                #{modifier,jdbcType=INTEGER},
+            </if>
+            <if test="remark != null">
+                #{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="publishStatus != null">
+                #{publishStatus,jdbcType=INTEGER},
+            </if>
+            <if test="publishTime != null">
+                #{publishTime,jdbcType=DATE},
+            </if>
+            <if test="publisherName != null">
+                #{publisherName,jdbcType=VARCHAR},
+            </if>
+            <if test="publisher != null">
+                #{publisher,jdbcType=INTEGER},
+            </if>
+            <if test="regionId != null">
+                #{regionId,jdbcType=BIGINT},
+            </if>
+            <if test="cropId != null">
+                #{cropId,jdbcType=INTEGER},
+            </if>
+            <if test="area != null">
+                #{area,jdbcType=NUMERIC},
+            </if>
+            <if test="dataTime != null">
+                #{dataTime,jdbcType=DATE},
+            </if>
+            <if test="resolution != null">
+                #{resolution,jdbcType=INTEGER},
+            </if>
+        </trim>
+    </insert>
+
+    <!--更新单条分布数据-->
+    <update id="update" parameterType="com.jh.land.entity.Area">
+        update ds_area
+        <set>
+            <if test="dataStatus != null">
+                data_status = #{dataStatus,jdbcType=CHAR},
+            </if>
+            <if test="delFlag != null">
+                del_flag = #{delFlag,jdbcType=CHAR},
+            </if>
+            <if test="createTime != null">
+                create_time = #{createTime,jdbcType=DATE},
+            </if>
+            <if test="creatorName != null">
+                creator_name = #{creatorName,jdbcType=VARCHAR},
+            </if>
+            <if test="creator != null">
+                creator = #{creator,jdbcType=INTEGER},
+            </if>
+            <if test="modifyTime != null">
+                modify_time = #{modifyTime,jdbcType=DATE},
+            </if>
+            <if test="modifierName != null">
+                modifier_name = #{modifierName,jdbcType=VARCHAR},
+            </if>
+            <if test="modifier != null">
+                modifier = #{modifier,jdbcType=INTEGER},
+            </if>
+            <if test="remark != null">
+                remark = #{remark,jdbcType=VARCHAR},
+            </if>
+            <if test="publishStatus != null">
+                publish_status = #{publishStatus,jdbcType=INTEGER},
+            </if>
+            <if test="publishTime != null">
+                publish_time = #{publishTime,jdbcType=DATE},
+            </if>
+            <if test="publisherName != null">
+                publisher_name = #{publisherName,jdbcType=VARCHAR},
+            </if>
+            <if test="publisher != null">
+                publisher = #{publisher,jdbcType=INTEGER},
+            </if>
+            <if test="regionId != null">
+                region_id = #{regionId,jdbcType=BIGINT},
+            </if>
+            <if test="cropId != null">
+                crop_id = #{cropId,jdbcType=INTEGER},
+            </if>
+            <if test="area != null">
+                area = #{area,jdbcType=NUMERIC},
+            </if>
+            <if test="dataTime != null">
+                data_time = #{dataTime,jdbcType=DATE},
+            </if>
+            <if test="resolution != null">
+                resolution = #{resolution,jdbcType=INTEGER},
+            </if>
+        </set>
+        where id = #{id,jdbcType=INTEGER}
+    </update>
+
+    <!--删除单条分布数据(物理删除)-->
+    <delete id="delete" parameterType="java.lang.Integer">
+        <!--
+          WARNING - @mbggenerated
+          This element is automatically generated by MyBatis Generator, do not modify.
+        -->
+        delete from ds_area
+        where id = #{id,jdbcType=INTEGER}
+    </delete>
+
+    <!--查询选中区域及其下级区域某一期的分布数据-->
+    <select id="findRegionAndBeyondArea" parameterType="com.jh.land.model.AreaVO" resultType="com.jh.land.model.AreaVO">
+        SELECT
+        r.china_name chinaName,d.area area
+        FROM
+        ds_area d,
+        init_region r
+        WHERE
+        d.region_id = r.region_id
+        AND d.del_flag = '1'
+        AND d.data_status = '1'
+        AND d.publish_status = 2201
+        <if test="dataTime != null">
+            AND d.data_time = #{dataTime,jdbcType=DATE}
+        </if>
+        <if test="startDate != null and endDate != null">
+            AND d.data_time BETWEEN #{startDate,jdbcType=DATE} AND #{endDate,jdbcType=DATE}
+        </if>
+        <if test="cropId != null">
+            AND crop_id = #{cropId,jdbcType=INTEGER}
+        </if>
+        <if test="regionId != null">
+            AND r.parent_id = #{regionId,jdbcType=BIGINT}
+        </if>
+        <!--<if test="regionId != null">-->
+        <!--AND (r.parent_id = #{regionId,jdbcType=BIGINT} or r.region_id = #{regionId,jdbcType=BIGINT})-->
+        <!--</if>-->
+        ORDER BY r.region_id
+    </select>
+
+
+    <!--查询选中区域及其下级区域某一期的分布数据-->
+    <select id="findRankAndBeyondArea" parameterType="com.jh.land.model.AreaVO" resultType="com.jh.land.model.AreaVO">
+        SELECT
+        region_id as regionId,
+        china_name as chinaName,s.sumarea as area
+        FROM
+        ( SELECT r.region_id, r.china_name FROM init_region r
+        WHERE 1=1
+        <if test="level > 4 and level != null">
+            AND r.region_id= #{regionId,jdbcType=BIGINT}
+        </if>
+        <if test="level lt 5 and level != null">
+            AND r.parent_id = #{regionId,jdbcType=BIGINT}
+        </if>
+        ) r
+        LEFT JOIN (
+        SELECT DISTINCT
+        ( parent_id ) AS parent_id,
+        sum( d.area ) AS sumArea
+        FROM
+        init_rank r
+        LEFT JOIN ds_area d ON r.rank_id = d.region_id
+        WHERE
+        d.del_flag = '1'
+        AND d.data_status = '1'
+        AND d.publish_status = 2201
+        <if test="dataTime != null">
+            AND d.data_time = #{dataTime,jdbcType=DATE}
+        </if>
+        <if test="startDate != null and endDate != null">
+            AND d.data_time BETWEEN #{startDate,jdbcType=DATE} AND #{endDate,jdbcType=DATE}
+        </if>
+        <if test="cropId != null">
+            AND d.crop_id = #{cropId,jdbcType=INTEGER}
+        </if>
+        <if test="level > 4 and level != null and regionId != null">
+            AND r.parent_id = #{regionId,jdbcType=BIGINT}
+        </if>
+        <if test="level lt 5 and level != null and regionId != null">
+            AND r.parent_id in (select region_id from init_region where parent_id= #{regionId,jdbcType=BIGINT} )
+        </if>
+        GROUP BY
+        parent_id
+        ) s ON s.parent_id = r.region_id order by region_id
+    </select>
+
+
+    <select id="selectBeyondArea" parameterType="com.jh.land.model.AreaVO" resultType="com.jh.land.model.AreaVO">
+    SELECT
+        r.china_name chinaName,
+        d.area area
+    FROM
+    (SELECT
+        region_id,
+        china_name
+    FROM
+        init_region
+    WHERE
+        parent_id = #{regionId,jdbcType=BIGINT} or region_id = #{regionId,jdbcType=BIGINT} order by region_id) r
+        left join (
+        SELECT
+            region_id,area
+        FROM
+            ds_area
+        WHERE
+            del_flag = '1'
+            AND data_status = '1'
+            AND publish_status = 2201
+            AND crop_id = #{cropId,jdbcType=INTEGER}
+            AND data_time BETWEEN #{startDate,jdbcType=DATE}
+            AND #{endDate,jdbcType=DATE}
+        ) d on r.region_id = d.region_id
+        order by r.region_id
+  </select>
+
+
+    <!--查询选中区域及其下级区域最新时间的分布数据-->
+    <select id="findRegionAndLatestTimeArea" parameterType="com.jh.land.model.AreaVO"
+            resultType="com.jh.land.model.AreaVO">
+    SELECT
+    round((A.area/10000),2) area,
+    A.crop_id AS cropId,
+    A.data_time AS dataTime,
+    b.region_id AS regionId,
+    b.region_code AS regionCode,
+    b.region_name AS regionName,
+    b.china_name AS chinaName,
+    EXTRACT ( YEAR FROM A.data_time ) AS YEAR
+    FROM
+    ds_area
+    A INNER JOIN init_region b ON A.region_id = b.region_id
+    WHERE  A.crop_id = #{cropId,jdbcType=INTEGER}
+    AND A.region_id IN ( SELECT region_id FROM init_region WHERE parent_id =  #{regionId,jdbcType=BIGINT} OR region_id =  #{regionId,jdbcType=BIGINT} )
+    AND A.data_time IN (
+      SELECT MAX(data_time) FROM ds_area WHERE
+       (EXTRACT(YEAR FROM data_time) = EXTRACT(YEAR FROM CURRENT_DATE))
+      AND region_id IN
+      (
+          SELECT region_id FROM
+           init_region WHERE
+           (parent_id=#{regionId,jdbcType=BIGINT} OR region_id=#{regionId,jdbcType=BIGINT})
+      ) AND crop_id=#{cropId,jdbcType=INTEGER}
+    ) ORDER BY A.region_id ASC
+  </select>
+
+    <!--查询选中区域的所有下级区域最新时间的土壤湿度数据-->
+    <select id="findLatestRegionAndSoilHumidity" parameterType="com.jh.land.model.AreaVO"
+            resultType="com.jh.land.model.AreaVO">
+        SELECT
+        r.china_name chinaName,d.area area, r.region_code as regionCode,r.region_name as regionName,r.region_id as
+        regionId,
+        d.crop_id as cropId,d.data_time as dataTime
+        FROM
+        ds_area d,
+        init_region r
+        WHERE
+        d.region_id = r.region_id
+        AND d.del_flag = '1'
+        AND d.data_status = '1'
+        AND d.publish_status = 2201
+        <if test="dataTime != null">
+            AND d.data_time = #{dataTime,jdbcType=DATE}
+        </if>
+        <if test="cropId != null">
+            AND crop_id = #{cropId,jdbcType=INTEGER}
+        </if>
+        <if test="regionId != null">
+            AND (r.parent_id = #{regionId,jdbcType=BIGINT} or r.region_id = #{regionId,jdbcType=BIGINT})
+        </if>
+    </select>
+
+    <delete id="batchDeleteByIds">
+        DELETE FROM ds_area
+        WHERE del_flag = '1' AND data_status = '1' AND publish_status != 2201 AND id IN
+        <foreach collection="ids" index="index" item="item" separator="," open="(" close=")">
+            #{item, jdbcType=INTEGER}
+        </foreach>
+    </delete>
+
+    <update id="batchPublishByIds">
+        UPDATE ds_area SET publish_status = 2201, publish_time = now()
+        WHERE del_flag = '1' AND data_status = '1' AND id IN
+        <foreach collection="ids" index="index" item="item" separator="," open="(" close=")">
+            #{item, jdbcType=INTEGER}
+        </foreach>
+    </update>
+
+    <update id="batchRecallByIds">
+        UPDATE ds_area SET publish_status = 2202
+        WHERE del_flag = '1' AND data_status = '1' AND id IN
+        <foreach collection="ids" index="index" item="item" separator="," open="(" close=")">
+            #{item, jdbcType=INTEGER}
+        </foreach>
+    </update>
+
+    <!--查询选中区域及其下级区域两年的分布数据-->
+    <select id="findRegionAndAreaWithTwoYear" parameterType="com.jh.land.model.AreaVO"
+            resultType="com.jh.land.model.AreaVO">
+    SELECT
+    A.area AS area,
+    A.crop_id AS cropId,
+    A.data_time AS dataTime,
+    b.region_id AS regionId,
+    b.region_name AS regionName,
+    b.china_name AS chinaName,
+    EXTRACT ( YEAR FROM A.data_time ) AS YEAR
+    FROM
+    ds_area
+    A INNER JOIN init_region b ON A.region_id = b.region_id
+    WHERE
+    A.crop_id = #{cropId,jdbcType=INTEGER}
+    AND A.region_id IN ( SELECT region_id FROM init_region WHERE parent_id =  #{regionId,jdbcType=BIGINT} OR region_id =  #{regionId,jdbcType=BIGINT} )
+    AND A.data_time IN (
+    SELECT MAX(data_time) FROM ds_area WHERE
+         ((EXTRACT(YEAR FROM data_time) = EXTRACT(YEAR FROM CURRENT_DATE)
+        OR EXTRACT(YEAR FROM data_time) = EXTRACT(YEAR FROM CURRENT_DATE)-1))
+        AND region_id IN
+        (
+            SELECT region_id FROM
+             init_region WHERE
+             (parent_id=#{regionId} OR region_id=#{regionId})
+        ) AND crop_id=#{cropId}
+        GROUP BY EXTRACT(YEAR FROM data_time)
+    ) ORDER BY A.region_id ASC
+  </select>
+
+    <!--查询选中区域及其下级区域三年的分布数据-->
+    <select id="findRegionAndAreaWithThreeYear" parameterType="com.jh.land.model.AreaVO"
+            resultType="com.jh.land.model.AreaVO">
+    SELECT
+    round((A.area/10000),2) AS area,
+    A.crop_id AS cropId,
+    A.data_time AS dataTime,
+    b.region_id AS regionId,
+    b.region_name AS regionName,
+    b.china_name AS chinaName,
+    EXTRACT ( YEAR FROM A.data_time ) AS YEAR
+    FROM
+    ds_area
+    A INNER JOIN init_region b ON A.region_id = b.region_id
+    WHERE
+    A.crop_id = #{cropId,jdbcType=INTEGER}
+    AND A.region_id IN ( SELECT region_id FROM init_region WHERE parent_id =  #{regionId,jdbcType=BIGINT} OR region_id =  #{regionId,jdbcType=BIGINT} )
+    AND A.data_time IN (
+      SELECT MAX(data_time) FROM ds_area WHERE
+         ((EXTRACT(YEAR FROM data_time) = EXTRACT(YEAR FROM CURRENT_DATE)
+        OR EXTRACT(YEAR FROM data_time) = EXTRACT(YEAR FROM CURRENT_DATE)-1
+        OR EXTRACT(YEAR FROM data_time) = EXTRACT(YEAR FROM CURRENT_DATE)-2))
+        AND region_id IN
+        (
+            SELECT region_id FROM
+             init_region WHERE
+             (parent_id=#{regionId} OR region_id=#{regionId})
+        ) AND crop_id=#{cropId}
+        GROUP BY EXTRACT(YEAR FROM data_time)
+    ) ORDER BY A.region_id ASC
+  </select>
+
+
+    <!--查询选中区域及其下级区域地块三年的分布数据-->
+    <select id="findRankAndAreaWithThreeYear" parameterType="com.jh.land.model.AreaVO"
+            resultType="com.jh.land.model.AreaVO">
+    SELECT
+        r.region_id as regionId,
+        r.china_name as chinaName,
+        a.area,
+        cropId,
+        dataTime,
+        regionName,
+    YEAR
+    FROM
+        ( SELECT region_id, china_name FROM init_region WHERE region_id = #{regionId,jdbcType=BIGINT} OR parent_id = #{regionId,jdbcType=BIGINT} ) r
+        LEFT JOIN (
+    SELECT
+        sum( A.area ) AS area,
+        A.crop_id AS cropId,
+        A.data_time AS dataTime,
+        c.region_id AS regionId,
+        c.region_name AS regionName,
+        c.china_name AS chinaName,
+        EXTRACT ( YEAR FROM A.data_time ) AS YEAR
+    FROM
+        ds_area A
+        INNER JOIN init_rank b ON A.region_id = b.rank_id
+        LEFT JOIN init_region c ON b.parent_id = c.region_id
+    WHERE
+        A.crop_id = #{cropId}
+        AND b.parent_id IN ( SELECT region_id FROM init_region WHERE parent_id = #{regionId,jdbcType=BIGINT} OR region_id = #{regionId,jdbcType=BIGINT} )
+        AND A.data_time IN (
+    SELECT
+        MAX( data_time )
+    FROM
+        ds_area
+    WHERE
+        (
+        (
+        EXTRACT( YEAR FROM data_time ) = EXTRACT( YEAR FROM CURRENT_DATE )
+        OR EXTRACT( YEAR FROM data_time ) = EXTRACT( YEAR FROM CURRENT_DATE ) - 1
+        OR EXTRACT( YEAR FROM data_time ) = EXTRACT( YEAR FROM CURRENT_DATE ) - 2
+        )
+        )
+        AND region_id IN ( SELECT rank_id FROM init_rank WHERE parent_id IN ( SELECT region_id FROM init_region WHERE ( parent_id = #{regionId,jdbcType=BIGINT} OR region_id = #{regionId,jdbcType=BIGINT} ) ) )
+        AND crop_id = #{cropId}
+    GROUP BY
+        EXTRACT( YEAR FROM data_time )
+        )
+    GROUP BY
+        a.data_time,
+        c.region_id,
+        a.crop_id,
+        c.region_name,
+        c.china_name
+    ORDER BY
+        c.region_id ASC
+        ) AS a ON r.region_id = a.regionId
+  </select>
+
+
+    <!--根据任务ID查询分布的数据集-->
+    <select id="findAreaDataSetListByTaskId" parameterType="com.jh.land.model.WarehousingTaskVO"
+            resultType="com.jh.land.model.AreaVO">
+    SELECT
+    area.region_id as regionId,
+	area.crop_id as cropId,
+	area.resolution as resolution,
+	area.data_time as dataTime,
+	area.area as area
+	FROM
+	ds_area area
+    WHERE
+	id IN ( SELECT id FROM "task_business_relation" taskBusinessRelation WHERE task_id =  #{taskId,jdbcType=BIGINT}  )
+
+  </select>
+
+
+    <!--查询导出数据-->
+    <select id="findExportData" parameterType="com.jh.land.model.AreaVO" resultType="com.jh.land.model.AreaVO">
+        SELECT
+        r.china_name chinaName,d.area area
+        FROM
+        ds_area d,
+        init_region r
+        WHERE
+        d.region_id = r.region_id
+        AND d.del_flag = '1'
+        AND d.data_status = '1'
+        AND d.publish_status = 2201
+        <if test="dataTime != null">
+            AND d.data_time = #{dataTime,jdbcType=DATE}
+        </if>
+        <if test="startDate != null and endDate != null">
+            AND d.data_time BETWEEN #{startDate,jdbcType=DATE} AND #{endDate,jdbcType=DATE}
+        </if>
+        <if test="cropId != null">
+            AND crop_id = #{cropId,jdbcType=INTEGER}
+        </if>
+        <if test="regionId != null">
+            AND (r.parent_id = #{regionId,jdbcType=BIGINT} or r.region_id = #{regionId,jdbcType=BIGINT})
+        </if>
+        ORDER BY r.region_id
+    </select>
+
+    <delete id="deleteRankArea" parameterType="com.jh.land.model.RankAreaTaskVO">
+        DELETE FROM ${tableName} WHERE data_status = '1' AND del_flag = '1' and product_id in
+        <foreach collection="checkResultList" index="index" item="item" open="(" separator="," close=")">
+            #{item}
+        </foreach>
+    </delete>
+
+</mapper>

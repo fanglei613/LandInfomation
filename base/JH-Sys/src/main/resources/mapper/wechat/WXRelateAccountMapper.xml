@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jh.wechat.mapping.IWXRelateAccountMapper">
+
+
+    <insert id="insertRelateAccount" parameterType="com.jh.wechat.entity.WXRelateAccountEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO wx_relate_account(wx_id,tel,register_time)
+        VALUES (#{wxId},#{tel},now())
+    </insert>
+
+    <select id="findWxUserByWxid" parameterType="java.lang.String" resultType="com.jh.wechat.entity.WXRelateAccountEntity">
+        SELECT id,wx_id AS wxId ,tel,register_time AS registerTime FROM wx_relate_account WHERE wx_id = #{wxId}
+    </select>
+
+</mapper>

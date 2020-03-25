@@ -1,0 +1,49 @@
+#application port and name
+spring:
+  application:
+    name: JH-Gateway
+  http:
+    multipart:
+      enabled: true
+      max-file-size: 50mb
+      max-request-size: 50mb
+server:
+  port: 8001
+
+#register server 
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8000/eureka
+  instance:
+    prefer-ip-address: true
+
+#log
+logging:
+  file: ../logs/${spring.application.name}.log
+  level:
+    org:
+      springframework:
+        boot: info
+
+#config http://localhost:8001/routes
+management:
+  security:
+    enabled: false
+
+#zuul 
+zuul:
+  host:
+    connect-timeout-millis: 10000
+    socket-timeout-millis: 60000
+  add-host-header: true
+hystrix:
+  command:
+    default:
+      execution:
+        isolation:
+          thread:
+            timeoutInMilliseconds: 60000
+ribbon:
+  ReadTimeout: 60000
+  ConnectTimeout: 60000

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jh.system.mapping.ILogsMapper" >
+    <resultMap id="BaseResultMap" type="com.jh.system.entity.Logs" >
+        <id column="log_id" property="logId" jdbcType="INTEGER" />
+        <result column="operator_name" property="operatorName" jdbcType="VARCHAR" />
+        <result column="operator" property="operator" jdbcType="INTEGER" />
+        <result column="op_time" property="opTime" jdbcType="DATE" />
+        <result column="op_ip" property="opIp" jdbcType="VARCHAR" />
+        <result column="op_content" property="opContent" jdbcType="VARCHAR" />
+    </resultMap>
+
+    <sql id="Base_Column_List" >
+        log_id AS logId, operator_name AS operatorName, operator AS operator, op_time AS opTime, op_ip AS opIp, op_content AS opContent
+    </sql>
+    
+    <insert id="save" parameterType="Logs">
+        INSERT INTO op_logs
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="operator != null">operator,</if>
+            <if test="operatorName != null and operatorName != ''">operator_name,</if>
+            <if test="opTime != null">op_time,</if>
+            <if test="opIp != null and opIp != null">op_ip,</if>
+            <if test="opContent != null and opContent != ''">op_content,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="operator != null">#{operator,jdbcType=INTEGER},</if>
+            <if test="operatorName != null and operatorName != ''">#{operatorName,jdbcType=VARCHAR},</if>
+            <if test="opTime != null">#{opTime,jdbcType=DATE},</if>
+            <if test="opIp != null and opIp != null">#{opIp,jdbcType=VARCHAR},</if>
+            <if test="opContent != null and opContent != ''">#{opContent,jdbcType=VARCHAR},</if>
+        </trim>
+    </insert>
+
+    <select id="queryByPage" parameterType="LogParam" resultType="Logs">
+         SELECT
+         <include refid="Base_Column_List"/>
+         FROM op_logs
+        <where>
+            <if test="operatorName != null and operatorName != ''">
+                operator_name like '%' || #{operatorName,jdbcType=VARCHAR} || '%'
+            </if>
+            <if test="startLogDate != null and startLogDate != '' and endLogDate != null and endLogDate != ''">
+                AND op_time BETWEEN CAST((#{startLogDate} || ' 00:00:00') AS  TIMESTAMP)AND CAST((#{endLogDate} || ' 23:59:59') AS TIMESTAMP)
+            </if>
+            <if test="logContentKey != null and logContentKey != ''">
+                AND op_content LIKE '%' ||  #{logContentKey,jdbcType=VARCHAR} || '%'
+            </if>
+        </where>
+        ORDER BY op_time DESC
+    </select>
+
+</mapper>

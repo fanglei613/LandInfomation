@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jh.wechat.mapping.IWXSentReporterMapper">
+
+    <!--批量保存发送的消息 -->
+    <insert id="saveWXSentReporter" parameterType="java.util.List">
+        insert into wx_sent_reporter(wx_id,reporter_id,sent_time) values
+        <foreach collection="sentReporters" item="sentReporter" separator=",">
+            (#{sentReporter.wxId},#{sentReporter.reporterId},now())
+        </foreach>
+    </insert>
+
+    <!-- 根据多个wxId来获取对应的数据 -->
+    <select id="findSentReporterByWxids" parameterType="java.util.List" resultType="com.jh.wechat.entity.WXSentReporterEntity">
+        select wx_id AS wxId,reporter_id as reporterId,sent_time as sentTime from wx_sent_reporter WHERE wx_id in
+        <foreach collection="wxIds" item="wxId" separator="," open="(" close=")">
+            #{wxId}
+        </foreach>
+    </select>
+
+</mapper>

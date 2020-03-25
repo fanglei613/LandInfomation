@@ -1,0 +1,24 @@
+spring:
+  application:
+    name: JH-Server
+server:
+  port: 8000
+  
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8000/eureka
+    register-with-eureka: false
+    fetch-registry: false
+endpoints:
+  shutdown:
+    enabled: true
+    sensitive: false
+
+#log
+logging:
+  file: ../logs/${spring.application.name}.log
+  level:
+    org:
+      springframework:
+        boot: info

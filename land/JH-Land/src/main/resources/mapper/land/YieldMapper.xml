@@ -1,0 +1,492 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.jh.land.mapping.IYieldMapper">
+  <resultMap id="BaseResultMap" type="com.jh.land.entity.Yield">
+    <id column="id" jdbcType="INTEGER" property="id" />
+    <result column="data_status" jdbcType="CHAR" property="dataStatus" />
+    <result column="del_flag" jdbcType="CHAR" property="delFlag" />
+    <result column="create_time" jdbcType="DATE" property="createTime" />
+    <result column="creator_name" jdbcType="VARCHAR" property="creatorName" />
+    <result column="creator" jdbcType="INTEGER" property="creator" />
+    <result column="modify_time" jdbcType="DATE" property="modifyTime" />
+    <result column="modifier_name" jdbcType="VARCHAR" property="modifierName" />
+    <result column="modifier" jdbcType="INTEGER" property="modifier" />
+    <result column="remark" jdbcType="VARCHAR" property="remark" />
+    <result column="publish_status" jdbcType="INTEGER" property="publishStatus" />
+    <result column="publish_time" jdbcType="DATE" property="publishTime" />
+    <result column="publisher_name" jdbcType="VARCHAR" property="publisherName" />
+    <result column="publisher" jdbcType="INTEGER" property="publisher" />
+    <result column="region_id" jdbcType="BIGINT" property="regionId" />
+    <result column="crop_id" jdbcType="INTEGER" property="cropId" />
+    <result column="yield" jdbcType="NUMERIC" property="yield" />
+    <result column="data_time" jdbcType="DATE" property="dataTime" />
+    <result column="resolution" jdbcType="INTEGER" property="resolution" />
+    <result column="yield_unit" jdbcType="NUMERIC" property="yieldUnit" />
+    <result column="total" jdbcType="NUMERIC" property="total" />
+  </resultMap>
+
+  <sql id="Base_Column_List">
+    id, data_status, del_flag, create_time, creator_name, creator, modify_time, modifier_name,
+    modifier, remark, publish_status, publish_time, publisher_name, publisher, region_id, 
+    crop_id, yield, data_time, resolution, yield_unit, total
+  </sql>
+
+  <!--根据主键查询估产详情-->
+  <select id="getById" parameterType="java.lang.Integer" resultMap="BaseResultMap" >
+    SELECT
+    <include refid="Base_Column_List" />
+    FROM ds_yield
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+
+  <!--根据条件查询估产数据时间点-->
+  <select id="findYieldTimes" resultType="java.lang.String" parameterType="com.jh.land.model.YieldVO" >
+    SELECT
+      DISTINCT(data_time)
+    FROM
+    ds_yield
+    WHERE
+    del_flag = '1'
+    AND data_status = '1'
+    AND publish_status = 2201
+    <if test="regionId != null" >
+      AND  region_id = #{regionId}
+    </if>
+    <if test="cropId != null" >
+      AND  crop_id = #{cropId}
+    </if>
+    <if test="resolution != null" >
+      AND  resolution = #{resolution}
+    </if>
+    <if test="startDate != null and endDate != null"  >
+      AND  data_time BETWEEN  to_date(#{startDate},'yyyy-MM-dd') AND to_date(#{endDate},'yyyy-MM-dd')
+    </if>
+    order by data_time asc
+  </select>
+
+  <!-- 估产数据分页查询 -->
+  <select id="findWithPage" resultType="com.jh.land.model.YieldVO" parameterType="com.jh.land.model.YieldVO">
+    select yield.id as id,yield.yield as yield ,yield.region_id as regionId, yield.crop_id as cropId,
+    yield.publisher_name as publisherName,yield.publish_status as publishStatus,
+    yield.publish_time as publishTime,yield.data_time as dataTime,yield.resolution as resolution
+    from ds_yield yield  left  join init_region region on yield.region_id = region.region_id  where yield.del_flag = '1' and yield.data_status = '1'
+
+    <if test="regionCode!=null and regionCode!=''">
+      AND region.region_code like #{regionCode,jdbcType=VARCHAR} || '%'
+    </if>
+
+    <if test="resolution != null and resolution != '' ">
+      AND  yield.resolution = #{resolution,jdbcType=BIGINT}
+    </if>
+
+    <if test="publisherName != null and publisherName != '' ">
+      AND  yield.publisher_name like CONCAT('%', #{publisherName}, '%')
+    </if>
+
+    <if test="publishStatus != null and publishStatus != '' ">
+      AND  yield.publish_status = #{publishStatus,jdbcType=BIGINT}
+    </if>
+
+    <if test="startTime != null and startTime != '' and endTime != null and endTime != ''">
+      and yield.data_time BETWEEN CAST((#{startTime} || ' 00:00:00') AS  TIMESTAMP)AND CAST((#{endTime} || ' 23:59:59') AS TIMESTAMP)
+    </if>
+
+    ORDER BY
+    <choose>
+      <when test="sidx != null and sidx != ''">
+        ${sidx} ${sord}
+      </when>
+      <otherwise>
+        yield.publish_status desc,
+        yield.create_time DESC
+      </otherwise>
+    </choose>
+
+  </select>
+
+  <!--根据主键id查询分布详情-->
+  <select id="findById" parameterType="java.lang.Integer" resultType="com.jh.land.entity.Yield" >
+    select yield.id as id,yield.yield as yield ,yield.region_id as regionId, yield.crop_id as cropId,
+    yield.publisher_name as publisherName,yield.publish_status as publishStatus,
+    yield.publish_time as publishTime,yield.data_time as dataTime,yield.resolution as resolution,yield.remark as remark
+    from ds_yield yield
+    where id = #{id,jdbcType=INTEGER}
+  </select>
+
+  <!--修改发布状态-->
+  <update id="publishStatus" parameterType="com.jh.land.model.YieldVO">
+    update ds_yield
+    <set >
+      <if test="publishStatus != null" > publish_status = #{publishStatus}, </if>
+      publish_time  = now(),
+      <if test="publisherName != null" > publisher_name = #{publisherName}, </if>
+      <if test="publisher != null" > publisher = #{publisher}, </if>
+    </set>
+    where id in
+    <foreach collection="idList" index="index" item="item" open="(" separator="," close=")">
+      #{item}
+    </foreach>
+  </update>
+
+  <!-- 根据作物及时间节点查询返回估产汇总数据 -->
+  <select id="findYieldByCropAndTimes" resultType="com.jh.land.entity.YieldCollect" >
+    SELECT round((a.yield/10000),2) as yield,
+    a.yield_unit AS yieldUnit,a.total,a.crop_id AS cropId,
+    a.data_time AS dataTime,b.region_id AS regionId,b.region_name AS regionName,
+    b.china_name AS chinaName
+    FROM ds_yield a
+    INNER JOIN init_region b
+    ON a.region_id = b.region_id
+    WHERE a.crop_id=#{cropId}
+    AND a.region_id IN
+    (
+      SELECT region_id FROM init_region WHERE parent_id=#{regionId} OR region_id=#{regionId}
+    )
+    AND a.data_time =
+    (
+      SELECT MAX(data_time) FROM ds_yield WHERE region_id=#{regionId} AND crop_id=#{cropId}
+    )
+    ORDER BY a.region_id ASC;
+  </select>
+
+  <!-- 根据作物查询返回最近3年估产汇总数据 -->
+  <select id="findYieldByCropWith3Years" resultType="com.jh.land.entity.YieldCollect" >
+  SELECT round((a.yield/10000),2) as yield,a.yield_unit AS yieldUnit,a.total,a.crop_id AS cropId,
+  a.data_time AS dataTime,b.region_id AS regionId,b.region_name AS regionName,
+  b.china_name AS chinaName,EXTRACT(YEAR FROM a.data_time) as year
+  FROM ds_yield a
+  INNER JOIN init_region b
+  ON a.region_id = b.region_id
+  WHERE a.crop_id=#{cropId}
+  AND a.region_id in
+  (SELECT region_id FROM init_region WHERE parent_id=#{regionId} OR region_id=#{regionId})
+  AND a.data_time in
+  (
+      SELECT MAX(data_time) FROM ds_yield WHERE
+       ((EXTRACT(YEAR FROM data_time) = EXTRACT(YEAR FROM CURRENT_DATE)
+      OR EXTRACT(YEAR FROM data_time) = EXTRACT(YEAR FROM CURRENT_DATE)-1
+      OR EXTRACT(YEAR FROM data_time) = EXTRACT(YEAR FROM CURRENT_DATE)-2))
+      AND region_id IN
+      (
+          SELECT region_id FROM
+           init_region WHERE
+           (parent_id=#{regionId} OR region_id=#{regionId})
+      ) AND crop_id=#{cropId}
+      GROUP BY EXTRACT(YEAR FROM data_time)
+  )
+  ORDER BY a.region_id ASC;
+  </select>
+
+  <!-- 根据作物查询返回最近2年估产汇总数据 -->
+  <select id="findYieldByCropWith2Years" resultType="com.jh.land.entity.YieldCollect" >
+  SELECT round((a.yield/10000),2) as yield,a.yield_unit AS yieldUnit,a.total,a.crop_id AS cropId,
+  a.data_time AS dataTime,b.region_id AS regionId,b.region_name AS regionName,
+  b.china_name AS chinaName,EXTRACT(YEAR FROM a.data_time) as year
+  FROM ds_yield a
+  INNER JOIN init_region b
+  ON a.region_id = b.region_id
+  WHERE a.crop_id=#{cropId}
+  AND a.region_id in
+  (SELECT region_id FROM init_region WHERE parent_id=#{regionId} OR region_id=#{regionId})
+  AND a.data_time in
+  (
+      SELECT MAX(data_time) FROM ds_yield WHERE
+       ((EXTRACT(YEAR FROM data_time) = EXTRACT(YEAR FROM CURRENT_DATE)
+      OR EXTRACT(YEAR FROM data_time) = EXTRACT(YEAR FROM CURRENT_DATE)-1
+      OR EXTRACT(YEAR FROM data_time) = EXTRACT(YEAR FROM CURRENT_DATE)-2))
+      AND region_id IN
+      (
+          SELECT region_id FROM
+           init_region WHERE
+           (parent_id=#{regionId} OR region_id=#{regionId})
+      ) AND crop_id=#{cropId}
+      GROUP BY EXTRACT(YEAR FROM data_time)
+  )
+  ORDER BY b.region_id ASC;
+  </select>
+
+
+  <insert id="save" parameterType="com.jh.land.entity.Yield" >
+    insert into ds_yield
+    <trim prefix="(" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        id,
+      </if>
+      <if test="dataStatus != null" >
+        data_status,
+      </if>
+      <if test="delFlag != null" >
+        del_flag,
+      </if>
+      <if test="createTime != null" >
+        create_time,
+      </if>
+      <if test="creatorName != null" >
+        creator_name,
+      </if>
+      <if test="creator != null" >
+        creator,
+      </if>
+      <if test="modifyTime != null" >
+        modify_time,
+      </if>
+      <if test="modifierName != null" >
+        modifier_name,
+      </if>
+      <if test="modifier != null" >
+        modifier,
+      </if>
+      <if test="remark != null" >
+        remark,
+      </if>
+      <if test="publishStatus != null" >
+        publish_status,
+      </if>
+      <if test="publishTime != null" >
+        publish_time,
+      </if>
+      <if test="publisherName != null" >
+        publisher_name,
+      </if>
+      <if test="publisher != null" >
+        publisher,
+      </if>
+      <if test="regionId != null" >
+        region_id,
+      </if>
+      <if test="cropId != null" >
+        crop_id,
+      </if>
+      <if test="yield != null" >
+        yield,
+      </if>
+      <if test="dataTime != null" >
+        data_time,
+      </if>
+      <if test="resolution != null" >
+        resolution,
+      </if>
+      <if test="yieldUnit != null" >
+        yield_unit,
+      </if>
+      <if test="total != null" >
+        total,
+      </if>
+    </trim>
+    <trim prefix="values (" suffix=")" suffixOverrides="," >
+      <if test="id != null" >
+        #{id,jdbcType=INTEGER},
+      </if>
+      <if test="dataStatus != null" >
+        #{dataStatus,jdbcType=CHAR},
+      </if>
+      <if test="delFlag != null" >
+        #{delFlag,jdbcType=CHAR},
+      </if>
+      <if test="createTime != null" >
+        #{createTime,jdbcType=DATE},
+      </if>
+      <if test="creatorName != null" >
+        #{creatorName,jdbcType=VARCHAR},
+      </if>
+      <if test="creator != null" >
+        #{creator,jdbcType=INTEGER},
+      </if>
+      <if test="modifyTime != null" >
+        #{modifyTime,jdbcType=DATE},
+      </if>
+      <if test="modifierName != null" >
+        #{modifierName,jdbcType=VARCHAR},
+      </if>
+      <if test="modifier != null" >
+        #{modifier,jdbcType=INTEGER},
+      </if>
+      <if test="remark != null" >
+        #{remark,jdbcType=VARCHAR},
+      </if>
+      <if test="publishStatus != null" >
+        #{publishStatus,jdbcType=INTEGER},
+      </if>
+      <if test="publishTime != null" >
+        #{publishTime,jdbcType=DATE},
+      </if>
+      <if test="publisherName != null" >
+        #{publisherName,jdbcType=VARCHAR},
+      </if>
+      <if test="publisher != null" >
+        #{publisher,jdbcType=INTEGER},
+      </if>
+      <if test="regionId != null" >
+        #{regionId,jdbcType=BIGINT},
+      </if>
+      <if test="cropId != null" >
+        #{cropId,jdbcType=INTEGER},
+      </if>
+      <if test="yield != null" >
+        #{yield,jdbcType=NUMERIC},
+      </if>
+      <if test="dataTime != null" >
+        #{dataTime,jdbcType=DATE},
+      </if>
+      <if test="resolution != null" >
+        #{resolution,jdbcType=INTEGER},
+      </if>
+      <if test="yieldUnit != null" >
+        #{yieldUnit,jdbcType=NUMERIC},
+      </if>
+      <if test="total != null" >
+        #{total,jdbcType=NUMERIC},
+      </if>
+    </trim>
+  </insert>
+
+
+
+  <update id="update" parameterType="com.jh.land.entity.Yield" >
+    update ds_yield
+    <set >
+      <if test="dataStatus != null" >
+        data_status = #{dataStatus,jdbcType=CHAR},
+      </if>
+      <if test="delFlag != null" >
+        del_flag = #{delFlag,jdbcType=CHAR},
+      </if>
+      <if test="createTime != null" >
+        create_time = #{createTime,jdbcType=DATE},
+      </if>
+      <if test="creatorName != null" >
+        creator_name = #{creatorName,jdbcType=VARCHAR},
+      </if>
+      <if test="creator != null" >
+        creator = #{creator,jdbcType=INTEGER},
+      </if>
+      <if test="modifyTime != null" >
+        modify_time = #{modifyTime,jdbcType=DATE},
+      </if>
+      <if test="modifierName != null" >
+        modifier_name = #{modifierName,jdbcType=VARCHAR},
+      </if>
+      <if test="modifier != null" >
+        modifier = #{modifier,jdbcType=INTEGER},
+      </if>
+      <if test="remark != null" >
+        remark = #{remark,jdbcType=VARCHAR},
+      </if>
+      <if test="publishStatus != null" >
+        publish_status = #{publishStatus,jdbcType=INTEGER},
+      </if>
+      <if test="publishTime != null" >
+        publish_time = #{publishTime,jdbcType=DATE},
+      </if>
+      <if test="publisherName != null" >
+        publisher_name = #{publisherName,jdbcType=VARCHAR},
+      </if>
+      <if test="publisher != null" >
+        publisher = #{publisher,jdbcType=INTEGER},
+      </if>
+      <if test="regionId != null" >
+        region_id = #{regionId,jdbcType=BIGINT},
+      </if>
+      <if test="cropId != null" >
+        crop_id = #{cropId,jdbcType=INTEGER},
+      </if>
+      <if test="yield != null" >
+        yield = #{yield,jdbcType=NUMERIC},
+      </if>
+      <if test="dataTime != null" >
+        data_time = #{dataTime,jdbcType=DATE},
+      </if>
+      <if test="resolution != null" >
+        resolution = #{resolution,jdbcType=INTEGER},
+      </if>
+      <if test="yieldUnit != null" >
+        yield_unit = #{yieldUnit,jdbcType=NUMERIC},
+      </if>
+      <if test="total != null" >
+        total = #{total,jdbcType=NUMERIC},
+      </if>
+    </set>
+    where id = #{id,jdbcType=INTEGER}
+  </update>
+
+  <!-- 删除单条估产数据(物理删除)-->
+  <delete id="delete" parameterType="java.lang.Integer">
+    <!--
+      WARNING - @mbggenerated
+      This element is automatically generated by MyBatis Generator, do not modify.
+    -->
+    delete from ds_yield
+    where id = #{id,jdbcType=INTEGER}
+  </delete>
+
+  <delete id="batchDeleteByIds">
+    DELETE FROM ds_yield
+    WHERE del_flag = '1' AND data_status = '1' AND publish_status != 2201 AND id IN
+    <foreach collection="ids" index="index" item="item" separator="," open="(" close=")">
+      #{item, jdbcType=INTEGER}
+    </foreach>
+  </delete>
+
+  <update id="batchPublishByIds">
+    UPDATE ds_yield SET publish_status = 2201, publish_time = now()
+    WHERE del_flag = '1' AND data_status = '1' AND id IN
+    <foreach collection="ids" index="index" item="item" separator="," open="(" close=")">
+      #{item, jdbcType=INTEGER}
+    </foreach>
+  </update>
+
+  <update id="batchRecallByIds">
+    UPDATE ds_yield SET publish_status = 2202
+    WHERE del_flag = '1' AND data_status = '1' AND id IN
+    <foreach collection="ids" index="index" item="item" separator="," open="(" close=")">
+      #{item, jdbcType=INTEGER}
+    </foreach>
+  </update>
+
+
+  <!--查询选中区域及其下级区域某一期的估产数据-->
+  <select id="findRegionAndBeyondYield" parameterType="com.jh.land.model.YieldVO" resultType="com.jh.land.model.YieldVO">
+    SELECT
+    r.china_name chinaName,d.yield yield
+    FROM
+    ds_yield d,
+    init_region r
+    WHERE
+    d.region_id = r.region_id
+    AND d.del_flag = '1'
+    AND d.data_status = '1'
+    AND d.publish_status = 2201
+    <if test="dataTime != null">
+      AND d.data_time =  #{dataTime,jdbcType=DATE}
+    </if>
+    <if test="startDate != null and endDate != null">
+      AND d.data_time BETWEEN #{startDate,jdbcType=DATE} AND #{endDate,jdbcType=DATE}
+    </if>
+    <if test="cropId != null">
+      AND crop_id = #{cropId,jdbcType=INTEGER}
+    </if>
+    <if test="regionId != null">
+      AND r.parent_id = #{regionId,jdbcType=BIGINT}
+    </if>
+    <!--<if test="regionId != null">-->
+    <!--AND (r.parent_id = #{regionId,jdbcType=BIGINT} or r.region_id = #{regionId,jdbcType=BIGINT})-->
+    <!--</if>-->
+    ORDER BY r.region_id
+  </select>
+
+  <!--根据任务ID查询估产的数据集-->
+  <select id="findYieldDataSetListByTaskId" parameterType="com.jh.land.model.WarehousingTaskVO" resultType="com.jh.land.model.YieldVO">
+    SELECT
+    yield.region_id AS regionId,
+	yield.crop_id AS cropId,
+	yield.resolution AS resolution,
+	yield.data_time AS dataTime,
+	yield.yield AS yield
+	FROM
+	ds_yield yield
+    WHERE
+	id IN ( SELECT id FROM "task_business_relation" taskBusinessRelation WHERE task_id =  #{taskId,jdbcType=BIGINT}  )
+
+  </select>
+
+</mapper>

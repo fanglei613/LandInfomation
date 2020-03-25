@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.jh.wechat.mapping.IWXRegionCropMapper">
+
+
+    <insert id="insertRegionCrop" parameterType="com.jh.wechat.entity.WXRegionCropEntity" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO wx_region_crop(tel,region_id,crop_id)
+        VALUES
+        <foreach collection="cropIdList" item="item" separator=",">
+            (#{tel},#{regionId},#{item})
+        </foreach>
+    </insert>
+
+    <select id="findByTel" parameterType="java.lang.String" resultType="com.jh.wechat.entity.WXRegionCropEntity">
+        SELECT id,tel,region_id as regionId,crop_id as cropId FROM wx_region_crop
+        WHERE tel = #{tel}
+    </select>
+
+    <select id="findByWXid" parameterType="java.lang.String" resultType="com.jh.wechat.entity.WXRegionCropEntity">
+        SELECT b.id,b.tel,b.region_id as regionId,b.crop_id as cropId,
+        r.china_name as regionName,d.data_name cropName
+        FROM wx_relate_account a JOIN  wx_region_crop b ON a.tel = b.tel
+        left join init_region r on b.region_id = r.region_id
+        left join init_dict d on b.crop_id = d.dict_id
+        WHERE a.wx_id = #{wechatID}
+    </select>
+
+    <select id="deleteByTel" parameterType="java.lang.String" resultType="java.lang.Integer">
+        delete from wx_region_crop WHERE tel = #{tel}
+    </select>
+
+</mapper>
