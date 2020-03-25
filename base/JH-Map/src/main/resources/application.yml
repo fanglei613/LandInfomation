@@ -8,12 +8,12 @@ spring:
         max-file-size: 50mb
         max-request-size: 50mb
   datasource:
-      url: jdbc:postgresql://192.168.1.248:5432/yangfang
-      username: postgres
-      password: postgres
-#      url: jdbc:postgresql://192.168.1.223:5432/yangfang
+#      url: jdbc:postgresql://192.168.1.248:5432/yangfang
 #      username: postgres
-#      password: pgdev2019
+#      password: postgres
+      url: jdbc:postgresql://jiahe-product-db.ch77edmdikxb.rds.cn-northwest-1.amazonaws.com.cn:5432/ground
+      username: jiaheinfo
+      password: JiaHe2020Cloud
       driver-class-name: org.postgresql.Driver
   # druid datasoure
       type: com.alibaba.druid.pool.DruidDataSource
