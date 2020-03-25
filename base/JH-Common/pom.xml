@@ -251,7 +251,7 @@
     <pluginRepository>
       <id>nexus</id>
       <name>Team Nexus Repository</name>
-      <url>http://192.168.1.222:8282/nexus/content/groups/public</url>
+      <url>http://maven.aliyun.com/nexus/content/groups/public</url>
     </pluginRepository>
     <pluginRepository>
       <id>spring-releases</id>

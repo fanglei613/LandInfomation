@@ -121,23 +121,6 @@
 
 	<build>
 		<plugins>
-			<!-- 
-			生成可执行的JAR，此方式适用于单个模块的配置，因为需要为每个模块工程配置mainClass
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-    			<artifactId>maven-jar-plugin</artifactId>
-    			<archive>
-    				<manifest>
-    					<mainClass></mainClass>
-    					<addClasspath>true</addClasspath>
-    					<classpathPrefix>lib</classpathPrefix>
-    				</manifest>
-    			</archive>
-    			<configuration>  
-                    <outputDirectory>${basedir}/../jar</outputDirectory>  
-                </configuration> 
-			</plugin> 
-			-->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-compiler-plugin</artifactId>
@@ -204,7 +187,7 @@
 		<repository>
 			<id>nexus</id>
 			<name>Team Nexus Repository</name>
-			<url>http://192.168.1.222:8282/nexus/content/groups/public</url>
+			<url>http://maven.aliyun.com/nexus/content/groups/public</url>
 		</repository>
 		<repository>
 			<id>spring-releases</id>
@@ -222,7 +205,7 @@
 		<pluginRepository>
 			<id>nexus</id>
 			<name>Team Nexus Repository</name>
-			<url>http://192.168.1.222:8282/nexus/content/groups/public</url>
+			<url>http://maven.aliyun.com/nexus/content/groups/public</url>
 		</pluginRepository>
 		<pluginRepository>
 			<id>spring-releases</id>
