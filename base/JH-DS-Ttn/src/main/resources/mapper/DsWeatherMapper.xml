@@ -98,4 +98,94 @@
         data_time
     </select>
 
+    <!--全年降雨统计-->
+    <select id="totalTrmm" resultType="java.math.BigDecimal" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        SELECT
+        sum(CAST ( trmm AS FLOAT )) AS value
+        FROM
+        ds_trmm
+        WHERE
+        del_flag = '1' AND publish_status = 2201
+        AND region_id = #{regionId}
+        AND data_time BETWEEN to_date(#{startDate},'yyyy-MM-dd')
+        AND to_date(#{endDate},'yyyy-MM-dd')
+        ORDER BY
+        data_time
+    </select>
+
+    <!--日均降雨统计-->
+    <select id="avgTrmm" resultType="java.math.BigDecimal" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        SELECT
+        avg(CAST ( trmm AS FLOAT )) AS value
+        FROM
+        ds_trmm
+        WHERE
+        del_flag = '1' AND publish_status = 2201
+        AND region_id = #{regionId}
+        AND data_time BETWEEN to_date(#{startDate},'yyyy-MM-dd')
+        AND to_date(#{endDate},'yyyy-MM-dd')
+        ORDER BY
+        data_time
+    </select>
+
+    <!--日均地温统计-->
+    <select id="avgTtn" resultType="java.math.BigDecimal" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        SELECT
+        avg(CAST ( t AS FLOAT )) AS value
+        FROM
+        ds_t
+        WHERE
+        del_flag = '1' AND publish_status = 2201
+        AND region_id = #{regionId}
+        AND data_time BETWEEN to_date(#{startDate},'yyyy-MM-dd')
+        AND to_date(#{endDate},'yyyy-MM-dd')
+        ORDER BY
+        data_time
+    </select>
+
+    <!--日均气温统计-->
+    <select id="avgWeather" resultType="java.lang.Integer" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        SELECT
+        avg((b_wendu+y_wendu)/2 ) AS value
+        FROM
+        ds_weather
+        WHERE
+        del_flag = '1' AND publish_status = 2201
+        AND region_id = #{regionId}
+        AND ymd BETWEEN to_date(#{startDate},'yyyy-MM-dd')
+        AND to_date(#{endDate},'yyyy-MM-dd')
+        ORDER BY
+        ymd
+    </select>
+
+    <!--最低气温统计-->
+    <select id="maxWeather" resultType="java.lang.Integer" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        SELECT
+        CAST ( y_wendu AS FLOAT ) AS value
+        FROM
+        ds_weather
+        WHERE
+        del_flag = '1' AND publish_status = 2201
+        AND region_id = #{regionId}
+        AND ymd BETWEEN to_date(#{startDate},'yyyy-MM-dd')
+        AND to_date(#{endDate},'yyyy-MM-dd')
+        ORDER BY
+        y_wendu asc limit 1
+    </select>
+
+    <!--最高气温统计-->
+    <select id="maxWeather" resultType="java.lang.Integer" parameterType="com.jh.ttn.entity.TtnEntity"  >
+        SELECT
+        CAST ( b_wendu AS FLOAT ) AS value
+        FROM
+        ds_weather
+        WHERE
+        del_flag = '1' AND publish_status = 2201
+        AND region_id = #{regionId}
+        AND ymd BETWEEN to_date(#{startDate},'yyyy-MM-dd')
+        AND to_date(#{endDate},'yyyy-MM-dd')
+        ORDER BY
+        b_wendu DESC limit 1
+    </select>
+
 </mapper>
