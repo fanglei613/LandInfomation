@@ -14,8 +14,9 @@
 		<module>base/JH-Server</module>
 		<module>base/JH-Gateway</module>
 		<module>base/JH-Map</module>
+		<module>base/JH-DS-Ttn</module>
 
-				<!-- 业务系统服务端 -->
+		<!-- 业务系统服务端 -->
 		<module>base/JH-Sys</module>
 		<module>land/JH-Land</module>
 
