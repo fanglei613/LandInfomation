@@ -175,7 +175,7 @@
       <dependency>
           <groupId>com.aspose</groupId>
           <artifactId>aspose-words</artifactId>
-          <version>RELEASE</version>
+          <version>15.8.0</version>
       </dependency>
       <dependency>
           <groupId>org.springframework</groupId>
@@ -233,7 +233,12 @@
     <repository>
       <id>nexus</id>
       <name>Team Nexus Repository</name>
-      <url>http://192.168.1.222:8282/nexus/content/groups/public</url>
+      <url>http://maven.aliyun.com/nexus/content/groups/public</url>
+    </repository>
+    <repository>
+      <id>AsposeJavaAPI</id>
+      <name>Aspose Java API</name>
+      <url>http://repository.aspose.com/repo/</url>
     </repository>
     <repository>
       <id>spring-releases</id>
