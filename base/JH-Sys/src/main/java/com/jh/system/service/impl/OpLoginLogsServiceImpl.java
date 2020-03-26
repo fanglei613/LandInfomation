@@ -28,13 +28,7 @@ public class OpLoginLogsServiceImpl implements IOpLoginLogsService {
     @Override
     public ResultMessage queryLoginNum(Integer accountId) {
         //查询当前登陆人是否是付费用户，如果为付费用户则不需要在第一次弹出提示
-        int vipType = permPersonMapper.queryVipType(accountId);
-        if(vipType == 1){
-            return ResultMessage.success(2);
-        }else{
-            int loginNum = opLoginLogsMapper.queryLoginNum(accountId);
-            return ResultMessage.success(loginNum);
-        }
-
+        int loginNum = opLoginLogsMapper.queryLoginNum(accountId);
+        return ResultMessage.success(loginNum);
     }
 }
