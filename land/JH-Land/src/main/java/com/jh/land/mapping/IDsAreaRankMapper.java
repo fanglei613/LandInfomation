@@ -52,4 +52,7 @@ public interface IDsAreaRankMapper {
      */
     int publishData(RankAreaVO rankAreaVO);
 
+
+    List<DsAreaRank> findAreaRankCropById(RankAreaVO rankAreaVO);
+
 }

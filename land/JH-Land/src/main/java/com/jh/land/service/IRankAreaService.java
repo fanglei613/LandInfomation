@@ -1,5 +1,6 @@
 package com.jh.land.service;
 
+import com.jh.land.entity.DsAreaRank;
 import com.jh.land.model.AreaVO;
 import com.jh.land.model.RankAreaTaskVO;
 import com.jh.land.model.RankAreaVO;
@@ -64,4 +65,7 @@ public interface IRankAreaService {
      * @version<1>  2019/12/12  wangli :Created
      */
     ResultMessage publishData(RankAreaVO rankAreaVO);
+
+
+    List<DsAreaRank> findAreaRankCropById(RankAreaVO rankAreaVO);
 }

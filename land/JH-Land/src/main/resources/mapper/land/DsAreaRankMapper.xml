@@ -231,4 +231,14 @@
   <update id="publishData" parameterType="com.jh.land.model.RankAreaVO">
     update ${areaTableName} set publish_status = #{publishStatus,jdbcType=INTEGER} where product_id = #{productId,jdbcType=INTEGER}
   </update>
+
+  <select id="findAreaRankCropById" parameterType="com.jh.land.model.RankAreaVO" resultType="com.jh.land.entity.DsAreaRank">
+  SELECT
+  <include refid="Base_Column_List"/>
+  FROM
+    ${areaTableName}
+    where region_id = #{regionId,jdbcType=BIGINT}
+  ORDER BY
+    data_time DESC
+  </select>
 </mapper>

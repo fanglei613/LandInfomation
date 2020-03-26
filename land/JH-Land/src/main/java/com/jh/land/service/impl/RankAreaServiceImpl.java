@@ -1,5 +1,6 @@
 package com.jh.land.service.impl;
 
+import com.jh.land.entity.DsAreaRank;
 import com.jh.land.entity.RankAreaTimes;
 import com.jh.land.enums.ProductTypeEnum;
 import com.jh.land.mapping.*;
@@ -178,5 +179,10 @@ public class RankAreaServiceImpl implements IRankAreaService {
     public ResultMessage publishData(RankAreaVO rankAreaVO) {
         areaRankMapper.publishData(rankAreaVO);
         return ResultMessage.success();
+    }
+
+    @Override
+    public List<DsAreaRank> findAreaRankCropById(RankAreaVO rankAreaVO) {
+        return areaRankMapper.findAreaRankCropById(rankAreaVO);
     }
 }

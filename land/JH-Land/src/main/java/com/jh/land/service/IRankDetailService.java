@@ -1,7 +1,10 @@
 package com.jh.land.service;
 
-import com.jh.land.entity.RankDetail;
+import com.github.pagehelper.PageInfo;
+import com.jh.land.model.RankDetail;
 import com.jh.vo.ResultMessage;
+
+import java.util.Map;
 
 public interface IRankDetailService {
     /*
@@ -34,5 +37,5 @@ public interface IRankDetailService {
      * @Return:
      * @version<1>  2020/3/24  wangli :Created
      */
-    ResultMessage rankDetailForMeteorologicalPhenomena(RankDetail rankDetail);
+    PageInfo<Map<String,Object>> rankDetailForMeteorologicalPhenomena(RankDetail rankDetail);
 }
