@@ -35,7 +35,7 @@ public class RankDetailController {
     public ResultMessage rankDetailForBase(Long rankId){
         return  rankDetailService.rankDetailForBase(rankId);
     }
-\
+
     @ApiOperation(value="",notes="根据地块id和年份查询地块的概况")
     @ApiImplicitParam(name = "rankDetail",value = "地块详情主体",required = false,paramType="form",dataType = "RankDetail")
     @RequestMapping(value="/rankDetailForBasicFacts",method= RequestMethod.GET)
@@ -57,7 +57,7 @@ public class RankDetailController {
         return  rankDetailService.rankDetailForMeteorologicalPhenomena(rankDetail);
     }
     public static void main(String[] args){
-        LocalDate date = LocalDate.parse("2019-08", DateTimeFormatter.ofPattern("yyyy-MM"));
+        LocalDate date = LocalDate.parse("2019-08-01", DateTimeFormatter.ofPattern("yyyy-MM-dd"));
         LocalDate first = date.with(TemporalAdjusters.firstDayOfMonth());
         LocalDate last = date.with(TemporalAdjusters.lastDayOfMonth());
         long days = first.until(last, ChronoUnit.DAYS);
