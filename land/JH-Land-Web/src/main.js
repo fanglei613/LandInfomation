@@ -23,7 +23,7 @@ import "./assets/css/global.css";
 
 //设置打包跨域设置
 Vue.prototype.baseApiPath =
-    process.env.NODE_ENV === "production" ? "http://113.57.163.74:8088/" : "/api";
+  process.env.NODE_ENV === "production" ? "http://113.57.163.74:8088/" : "/api";
 
 // 按需引入element-ui
 Vue.use(Button);
