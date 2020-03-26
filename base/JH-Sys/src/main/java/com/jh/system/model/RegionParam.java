@@ -1,6 +1,5 @@
 package com.jh.system.model;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
 import com.jh.system.entity.InitRegion;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -12,7 +11,6 @@ import io.swagger.annotations.ApiModelProperty;
  * 		添加InitRegion属性
  */
 @ApiModel(value = "RegionParam",description = "区域信息")
-@JsonInclude(JsonInclude.Include.NON_NULL)
 public class RegionParam {
 	@ApiModelProperty(value = "区域ID")
 	private Long regionId;
@@ -28,10 +26,6 @@ public class RegionParam {
 	private Long parentId;
 	@ApiModelProperty(value = "条带号")
 	private String stripNumber;
-
-	private Integer countRankNum;
-
-	private Integer countRankArea;
 
 
 	private InitRegion initRegion;
@@ -89,22 +83,5 @@ public class RegionParam {
 
 	public void setStripNumber(String stripNumber) {
 		this.stripNumber = stripNumber;
-	}
-
-
-	public Integer getCountRankNum() {
-		return countRankNum;
-	}
-
-	public void setCountRankNum(Integer countRankNum) {
-		this.countRankNum = countRankNum;
-	}
-
-	public Integer getCountRankArea() {
-		return countRankArea;
-	}
-
-	public void setCountRankArea(Integer countRankArea) {
-		this.countRankArea = countRankArea;
 	}
 }

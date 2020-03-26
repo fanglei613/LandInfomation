@@ -33,6 +33,14 @@ public interface ICacheService{
     ResultMessage findSubListByDictId(Integer dictId);
 
 
+    /*
+     * 功能描述: 一次查询两个层级的类别接口
+     * @Param:
+     * @Return:
+     * @version<1>  2019/8/29  wangli :Created
+     */
+    ResultMessage findType(Integer dictId);
+
     /**
      *根据区域ID查询名称
      * @return regionId

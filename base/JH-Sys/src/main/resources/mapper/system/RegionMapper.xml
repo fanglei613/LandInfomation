@@ -33,33 +33,12 @@
         @version <1> 2018-01-18 cxj:Created.
     -->
     <select id="findRegionListByParentId" resultMap="BaseResultMap" parameterType="java.lang.Long">
-        select region_id,region_code,region_name,china_name,local_name,level,parent_id,st_astext(centroid) as centroid from init_region
-        <if test="parentId==null or parentId==''">
-            where del_flag = '1' and data_status = '1' and region_id = 3102000006
+        select region_id,region_code,region_name,china_name,local_name,level,parent_id from init_region
+        <if test="parentId==null">
+            where level=1
         </if>
         <if test="parentId!=null">
-            where del_flag = '1' and data_status = '1' and parent_id=#{parentId}
-        </if>
-        order by region_id
-    </select>
-
-    <!--
-        根据parent_id获取包含地块区域列表，如果parent_id为空，则获取level=1的国家级区域列表
-    -->
-    <select id="findBlockRegionListByParentId" resultMap="BaseResultMap">
-        select region_id,region_code,region_name,china_name,local_name,level,parent_id,st_astext(centroid) as centroid from init_region
-        where 1=1
-        <if test="parentId==null or parentId==''">
-            and del_flag = '1' and data_status = '1' and region_id = 3102000006
-        </if>
-        <if test="parentId!=null">
-            and del_flag = '1' and data_status = '1' and parent_id=#{parentId}
-        </if>
-        <if test="level != null and level == 1">
-            and region_code in (select p_region_code from mv_init_rank_region)
-        </if>
-        <if test="level != null and level == 2">
-            and region_code in (select region_code from mv_init_rank_region)
+            where parent_id=#{parentId}
         </if>
         order by region_id
     </select>
@@ -419,7 +398,7 @@
     </select>
 
     <select id="findRegionByChinaName" parameterType="java.lang.String" resultMap="BaseResultMap">
-        select region_id ,region_code ,china_name,local_name  from init_region where china_name like #{chinaName}
+        select region_id ,region_code ,china_name,local_name,parent_id  from init_region where china_name like #{chinaName}
     </select>
 
     <!--
@@ -506,15 +485,11 @@
             AND b.LEVEL = 4
     </select>
 
-    <!--查询各镇地块总数和总面积 -->
-    <select id="queryRegionRankStatistics" resultType="map" parameterType="com.jh.system.model.RegionParam">
-        select count(0) rankNum,sum(area) area from init_rank_xjz where data_status='1' and del_flag='1' and parent_id = #{parentId,jdbcType=BIGINT}
-    </select>
-
-    <!--查询自己级下级所属区域的id -->
-    <select id="findRegionIdListByRegionCode" resultType="map" parameterType="java.lang.String">
-        select region_id from init_region  where del_flag = '1' and data_status = '1' and level = 3 and region_code like '%' || #{regionCode,jdbcType=VARCHAR} || '%'
-        order by region_id
+    <select id="queryRegionByKeyword" resultMap="BaseResultMap" parameterType="java.lang.String" >
+        select
+        region_id
+        from init_region
+        where china_name = #{keyword}
     </select>
 
 </mapper>

@@ -62,9 +62,6 @@ public class PermPerson extends BaseEntity {
     @ApiModelProperty(value = "头像url")
     private String photoUrl;
 
-    @ApiModelProperty(value = "vip等级")
-    private Integer vipType;
-
     public Integer getPersonId() {
         return personId;
     }
@@ -202,11 +199,4 @@ public class PermPerson extends BaseEntity {
         this.accountName = accountName;
     }
 
-    public Integer getVipType() {
-        return vipType;
-    }
-
-    public void setVipType(Integer vipType) {
-        this.vipType = vipType;
-    }
 }

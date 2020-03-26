@@ -46,14 +46,6 @@ public interface IPermPersonMapper extends IBaseMapper<PersonParam,PermPerson,In
      */
     Integer queryPersonType(Integer acountId);
 
-    /*
-     * 功能描述: 根据账号id查询vip类型
-     * @Param:
-     * @Return:
-     * @version<1>  2020/3/2  wangli :Created
-     */
-    Integer queryVipType(Integer acountId);
-
     /**
      * 根据账号ID查询用户信息
      * @param accountId
@@ -115,12 +107,4 @@ public interface IPermPersonMapper extends IBaseMapper<PersonParam,PermPerson,In
      * @version <1> 2019/4/23 mason:Created.
      */
     List<PermPerson> findPersonByKeyword(PersonParam personParam);
-
-    /*
-     * 功能描述:验证该注册用户是否已经注册超过90天，如超过90天则禁止登录
-     * @Param:
-     * @Return:
-     * @version<1>  2019/11/11  wangli :Created
-     */
-    int authRegisterDate(String mobile);
 }

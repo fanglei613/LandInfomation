@@ -24,12 +24,6 @@ public interface IRegionService  extends IBaseService<RegionParam, InitRegion, L
     ResultMessage findRegionListByParentId(Long parentId);
 
     /**
-     *  @description: 根据上一级ID获取存在地块的区域列表
-     *  @param parentId: 上一级区域ID
-     */
-    ResultMessage findBlockRegionListByParentId(Long parentId,Integer level);
-
-    /**
      *  @description: 根据父类区域ID查询其省级区域列表
      *  @param parentId: 上一级区域ID
      *  @version <1> 2018-04-17 cxw:Created.
@@ -163,15 +157,6 @@ public interface IRegionService  extends IBaseService<RegionParam, InitRegion, L
      */
     List<Map<String,Object>> findRegionByParentId(Map<String, Object> map);
 
-
-    /*
-     * 功能描述:查询自己以及下级region_id
-     * @Param:
-     * @Return:
-     * @version<1>  2019/12/5  wangli :Created
-     */
-    ResultMessage findRegionIdListByRegionCode(String regionCode);
-
     /**
      * region_code编码：
      * 规则：1.默认首汉字拼音前三位
@@ -209,13 +194,4 @@ public interface IRegionService  extends IBaseService<RegionParam, InitRegion, L
      * @version <1> 2019/4/13 15:46 zhangshen:Created.
      */
     ResultMessage queryRegionAppReturn(Long regionId);
-
-    /*
-     * 功能描述: 根据regioncode 查询 区域信息
-     * @Param:
-     * @Return:
-     * @version<1>  2019/12/6  wangli :Created
-     */
-    ResultMessage findRegionByCode(String regionCode);
-
 }

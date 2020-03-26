@@ -255,4 +255,9 @@ public class NoLogDictController {
     public ResultMessage queryDictByName(String dictNameStr){
         return dictService.findDictByName(dictNameStr);
     }
+
+    @PostMapping(value = "checkKeyWord")
+    public ResultMessage checkKeyWord(@RequestParam String keyWord){
+        return dictService.checkKeyWord(keyWord);
+    }
 }

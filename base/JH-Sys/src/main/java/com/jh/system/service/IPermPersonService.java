@@ -78,13 +78,6 @@ public interface IPermPersonService extends IBaseService<PersonParam, PermPerson
      */
     Integer queryPersonType(Integer acountId);
 
-    /*
-     * 功能描述:查询vip类型
-     * @Param:
-     * @Return:
-     * @version<1>  2020/3/2  wangli :Created
-     */
-    Integer queryVipType(Integer acountId);
     /**
      * 根据账号ID查询用户信息
      * @param accountId

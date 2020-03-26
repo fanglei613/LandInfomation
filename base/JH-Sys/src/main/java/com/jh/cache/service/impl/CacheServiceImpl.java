@@ -128,6 +128,55 @@ public class CacheServiceImpl  implements ICacheService {
         return ResultMessage.success(dictList);
     }
 
+    @Override
+    public ResultMessage findType(Integer dictId) {
+        //查询一级菜单   查询二级菜单
+
+        //首先查询 一级的大类  然后根据大类的id查询小类
+        List<Dict> dictList=new ArrayList<Dict>();
+        Map<String,Object> all = RedisUtil.getJsonToMap(CacheUtil.dict_list_key+dictId);
+        if(CollectionUtil.isNotEmpty(all)){
+            String dictListStr= all.get(CacheUtil.dict_list_key+dictId).toString();
+            dictList=JsonUtils.jsonToList(dictListStr,Dict.class);
+        }
+        if(CollectionUtil.isEmpty(dictList)){
+            Dict dict=new Dict();
+            dict.setParentId(dictId);
+            ResultMessage result=dictService.queryDictByParentId(dict);
+            if(result.isFlag()){
+                dictList=(List<Dict>)result.getData();
+                if(CollectionUtil.isNotEmpty(dictList)){
+                    Map<String,Object> map=new HashMap<String,Object>();
+                    map.put(CacheUtil.dict_list_key+dictId,dictList);
+                    RedisUtil.setJsonStr(CacheUtil.dict_list_key+dictId,map,expireSecond);
+                    logger.info("dictId:{},查询数据库，并设置缓存成功",dictId);
+                }else{
+                    logger.error("数据字典Id{}-不存在对应的子集列表",dictId);
+                }
+            }else{
+                logger.error("数据字典Id{}-查询子集列表失败",dictId);
+            }
+        }else{
+            for(int i = 0; i<dictList.size();i++){
+            //循环遍历一级大类 查询是否存在二级类别
+                Dict dict = dictList.get(i);
+                Integer dictSonId = dictList.get(i).getDictId();
+                List<Dict> dictSonList=new ArrayList<Dict>();
+                Map<String,Object> allSon = RedisUtil.getJsonToMap(CacheUtil.dict_list_key+dictSonId);
+                if(CollectionUtil.isNotEmpty(allSon)){
+                    String dictListSonStr= allSon.get(CacheUtil.dict_list_key+dictSonId).toString();
+                    dictSonList=JsonUtils.jsonToList(dictListSonStr,Dict.class);
+                }
+                if(!CollectionUtil.isEmpty(dictSonList)){//如果二级类别不为空 把二级类别中的数据加入到一级类别中
+                    dict.setHasSonList(true);
+                    dict.setSonList(dictSonList);
+                }
+            }
+            logger.info("dictId:{},从缓存取值字典子集列表成功",dictId);
+        }
+        return ResultMessage.success(dictList);
+    }
+
 
     @Override
     public ResultMessage queryNameByRegionId(Long regionId) {

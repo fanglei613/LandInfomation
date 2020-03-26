@@ -41,11 +41,6 @@ public class RegionServiceImpl extends BaseServiceImpl<RegionParam, InitRegion, 
         return ResultMessage.success(regionList);
     }
 
-    public ResultMessage findBlockRegionListByParentId(Long parentId,Integer level) {
-        List<RegionParam> regionList = regionMapper.findBlockRegionListByParentId(parentId,level);
-        return ResultMessage.success(regionList);
-    }
-
     /**
      *  @description: 根据父类区域ID查询其省级区域列表
      *  @param parentId: 上一级区域ID
@@ -372,12 +367,6 @@ public class RegionServiceImpl extends BaseServiceImpl<RegionParam, InitRegion, 
         return list;
     }
 
-    @Override
-    public ResultMessage findRegionIdListByRegionCode(String regionCode) {
-        List<Long> list = regionMapper.findRegionIdListByRegionCode(regionCode);
-        return ResultMessage.success(list);
-    }
-
     /**
      * region_code编码：
      * 规则：1.取所有汉字拼音的前三位
@@ -446,7 +435,7 @@ public class RegionServiceImpl extends BaseServiceImpl<RegionParam, InitRegion, 
             }else if(region.getLevel() == 3){ //市州
                 familyMap.put("provinceId",region.getParentId());
                 familyMap.put("cityId",region.getRegionId());
-            }else if(region.getLevel() == 4){ //区县
+            }else if(region.getLevel() >= 4){ //区县
                 Long cityId = region.getParentId();
                 familyMap.put("cityId", cityId);
                 ResultMessage cityRegionMsg = this.getById(cityId);
@@ -505,11 +494,4 @@ public class RegionServiceImpl extends BaseServiceImpl<RegionParam, InitRegion, 
         }
         return ResultMessage.success(regionAppReturnList);
     }
-
-    @Override
-    public ResultMessage findRegionByCode(String regionCode) {
-        InitRegion minRegion = regionMapper.findRegionByCode(regionCode);
-        return ResultMessage.success(minRegion);
-    }
-
 }

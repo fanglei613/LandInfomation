@@ -199,4 +199,30 @@ public interface IDictMapper extends IBaseMapper<DictParam, Dict,Integer>{
      */
     Dict queryDictByCode(Dict dict);
 
+    /*
+     * 功能描述: 检查关键字是否匹配大类
+     * @Param:
+     * @Return:
+     * @version<1>  2019/10/17  wangli :Created
+     */
+    Dict queryFirstClassify(String keyword);
+
+    /*
+     * 功能描述: 检查关键字是否匹配小类
+     * @Param:
+     * @Return:
+     * @version<1>  2019/10/17  wangli :Created
+     */
+    Dict querySecondClassify(String keyword);
+
+    /*
+     * 功能描述: 检查关键字是否匹配小类
+     *
+     *
+     *
+     * @Param:
+     * @Return:
+     * @version<1>  2019/10/17  wangli :Created
+     */
+    Dict queryCrop(String keyword);
 }

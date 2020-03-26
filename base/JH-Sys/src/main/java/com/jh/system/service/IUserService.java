@@ -236,6 +236,14 @@ public interface IUserService {
 	ResultMessage loginForWeb(UserParam userParam);
 
 	/**
+	 * 更新用户信息
+	 * @param redisKey  accountName
+	 * @return
+	 * @version<1> 2018-08-28 lcw: Created.</1>
+	 */
+	ResultMessage updateUserInfo(String redisKey,String accountName);
+
+	/**
 	 * 根据账号密码登录
 	 * @param  userParam: 登录信息
 	 *  accountName:账号即手机号
@@ -317,20 +325,4 @@ public interface IUserService {
 	 * @version <1> 2018-05-09 cxw： Created.
 	 */
 	ResultMessage findForumValidCodeForRegister(String mobile);
-
-	/*
-	 * 功能描述:检查用户类型
-	 * @Param:
-	 * @Return:
-	 * @version<1>  2019/11/12  wangli :Created
-	 */
-	/*ResultMessage queryPersonType(String mobile);*/
-
-	/*
-	 * 功能描述: 验证该用户是否注册超过90天 如果超过则不允许登录
-	 * @Param:
-	 * @Return:
-	 * @version<1>  2019/11/11  wangli :Created
-	 */
-	ResultMessage authRegisterDate(String mobile);
 }
