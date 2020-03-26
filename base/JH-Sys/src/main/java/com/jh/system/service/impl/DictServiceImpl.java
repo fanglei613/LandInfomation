@@ -8,6 +8,8 @@ import com.jh.enums.DelStatusEnum;
 import com.jh.system.Enum.DictEnum;
 import com.jh.system.base.repository.IBaseMapper;
 import com.jh.system.base.service.impl.BaseServiceImpl;
+import com.jh.system.entity.InitRegion;
+import com.jh.system.mapping.IRegionMapper;
 import com.jh.vo.ResultMessage;
 import com.jh.system.entity.Dict;
 import com.jh.system.entity.PermAccount;
@@ -28,6 +30,9 @@ import java.util.*;
 public class DictServiceImpl extends BaseServiceImpl<DictParam, Dict, Integer> implements IDictService {
     @Autowired
     private IDictMapper dictMapper;
+
+    @Autowired
+    private IRegionMapper regionMapper;
 
     @Autowired
     private IPermAccountMapper permAccountMapper;
@@ -447,5 +452,51 @@ public class DictServiceImpl extends BaseServiceImpl<DictParam, Dict, Integer> i
         dict.setDataCode(dataCode);
         dict = dictMapper.queryDictByCode(dict);
         return ResultMessage.success(dict);
+    }
+
+    @Override
+    public ResultMessage checkKeyWord(String keyword) {
+        ResultMessage resultMessage = new ResultMessage();
+        Map<String,Object> map = new HashMap<String,Object>();
+        map.put("tagType",0);
+        //检查 大类
+        Dict firstClassify = dictMapper.queryFirstClassify(keyword);
+        if(firstClassify != null){
+            map.put("tagType",1);
+            map.put("dict_id",firstClassify.getDictId());
+            resultMessage.setData(map);
+            resultMessage.setFlag(true);
+            return resultMessage;
+        }
+        //检查 小类
+        Dict secondClassify = dictMapper.querySecondClassify(keyword);
+        if(secondClassify != null){
+            map.put("tagType",2);
+            map.put("dictId",secondClassify.getDictId());
+            map.put("parentId",secondClassify.getParentId());
+            resultMessage.setData(map);
+            resultMessage.setFlag(true);
+            return resultMessage;
+        }
+        //检查区域
+        InitRegion region = regionMapper.queryRegionByKeyword(keyword);
+        if(region != null){
+            map.put("tagType",3);
+            map.put("regionId",region.getRegionId());
+            resultMessage.setData(map);
+            resultMessage.setFlag(true);
+            return resultMessage;
+        }
+        //检查 作物
+        Dict crop = dictMapper.queryCrop(keyword);
+        if(crop != null){
+            map.put("tagType",4);
+            map.put("cropId",crop.getDictId());
+            resultMessage.setData(map);
+            resultMessage.setFlag(true);
+            return resultMessage;
+        }
+        resultMessage.setData(map);
+        return resultMessage;
     }
 }

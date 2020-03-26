@@ -6,8 +6,6 @@ import com.jh.system.model.RegionParam;
 import com.jh.system.model.RegionTreeReturn;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
-import org.omg.CORBA.OBJ_ADAPTER;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Map;
@@ -19,7 +17,6 @@ import java.util.Map;
  *      新增接口
  */
 @Mapper
-@Repository
 public interface IRegionMapper extends IBaseMapper<RegionParam, InitRegion, Long> {
     /**
      *  @description: 根据上一级ID获取区域列表
@@ -27,21 +24,6 @@ public interface IRegionMapper extends IBaseMapper<RegionParam, InitRegion, Long
      *  @version <1> 2018-01-18 cxj:Created.
      */
     List<RegionParam> findRegionListByParentId(@Param(value = "parentId") Long parentId);
-
-    /**
-     *  @description: 根据上一级ID获取存在地块的区域列表
-     *  @param parentId: 上一级区域ID
-     */
-    List<RegionParam> findBlockRegionListByParentId(@Param(value = "parentId") Long parentId,
-                                                    @Param(value="level") Integer level);
-
-    /*
-     * 功能描述:查询自己以及自己下级的region_id
-     * @Param:
-     * @Return:
-     * @version<1>  2019/12/5  wangli :Created
-     */
-    List<Long> findRegionIdListByRegionCode(@Param(value = "regionCode") String regionCode);
 
     /**
      *  @description: 根据父类区域ID查询其省级区域列表
@@ -191,5 +173,11 @@ public interface IRegionMapper extends IBaseMapper<RegionParam, InitRegion, Long
      */
     List<Long> findMunicipalityArea();
 
-
+    /*
+     * 功能描述: 查询关键字是否匹配区域
+     * @Param:
+     * @Return: [keyword]
+     * @version<1>  2019/10/17  wangli :Created
+     */
+    InitRegion queryRegionByKeyword(String keyword);
 }

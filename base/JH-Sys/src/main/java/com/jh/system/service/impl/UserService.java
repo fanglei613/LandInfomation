@@ -149,6 +149,7 @@ public class UserService implements IUserService {
         return result;
     }
 
+
     /**
      * 找回密码，短信发送
      * @param mobile 用户参数
@@ -245,6 +246,65 @@ public class UserService implements IUserService {
                         voMap.put("defaultMenu", defaultMenu);
                     }
                 }
+            return buzRedisService.setUserLoginInfo(voMap);
+        }
+        return result;
+
+    }
+
+
+    /**
+     * 私有云后台服务： 更新个人昵称后重新获取个人的账号信息并刷新redis记录
+     * @param   redisKey, accountName
+     *  accountName:账号即手机号
+     *  accountPwd：密码
+     *   verifyCode：图形验证码
+     *   validToken： 登录生成的token
+     * @return  ResultMessage
+     * @version <1> 2018-08-08 13:46:16 cxw : Created.(加注释)
+     */
+    @Override
+    public ResultMessage updateUserInfo(String redisKey,String accountName) {
+
+        Map<String,Object> voMap = new HashMap<String,Object>();
+
+        ResultMessage result = findUserInfo(redisKey,accountName,true);
+        if(result.isFlag()){
+
+            voMap = (Map<String,Object>)result.getData();
+            Map<String,Object> userInfo = (Map<String,Object>)voMap.get("userInfo");
+
+            Integer accountId = Integer.parseInt(userInfo.get("accountId").toString());
+
+
+            //查询角色信息
+
+            //缓存账号角色
+            ResultMessage resultRoleMsg = relateAccountRoleService.findRolesByAccountId(accountId);
+            List<Map<String,Object>> roleList = null;
+            if (resultRoleMsg.isFlag()){
+                roleList = (List<Map<String,Object>>)resultRoleMsg.getData();
+            }
+            voMap.put("roleList",roleList);
+
+            //默认子系统首页,将排序后最小值的res_url给defaultMenu，作为首页访问
+            ResultMessage menuResult = permResourceService.findSubSystemByAccountId(accountId);
+            if(menuResult.isFlag()){
+                List<PermResource> resources = (List<PermResource>)menuResult.getData();
+                if(resources != null && resources.size() > 0){
+                    Short resNo = resources.get(0).getResNo() == null ? 10000 : resources.get(0).getResNo(); //第一个排序最小值，如果resNo为空，则赋予10000给他，尽量不在首页显示
+                    String defaultMenu = resources.get(0).getResUrl();
+                    for(PermResource resource : resources){
+                        if(resource.getResNo() != null && StringUtils.isNotBlank(resource.getResUrl())){
+                            if(resource.getResNo() < resNo ){
+                                resNo = resource.getResNo();
+                                defaultMenu = resource.getResUrl();
+                            }
+                        }
+                    }
+                    voMap.put("defaultMenu", defaultMenu);
+                }
+            }
             return buzRedisService.setUserLoginInfo(voMap);
         }
         return result;
@@ -489,6 +549,7 @@ public class UserService implements IUserService {
             voMap.put(ConstantUtil.USEPRODUCTFILTER_KEY, useProductFilterFlag);
 
             String redisKey = UUIDUtil.generateUUID();
+            //AccessToken
 
             voMap.put(SysConstant.Key_Login_Token, redisKey); //token
 
@@ -569,6 +630,62 @@ public class UserService implements IUserService {
         }catch (Exception e){
             return ResultMessage.fail("用户登录失败");
         }
+    }
+
+
+    /**
+     * 更新用户信息：多态的运用
+     * 默认是均不需要经过productFilter拦截器，若需要经历该拦截器，可直接调用loginForNoVerifyCode(UserParam userParam,boolean isVerifyCode, boolean useProductFilterFlag)方法
+     * @param redisKey
+     * @param accountName
+     * @return
+     */
+    public ResultMessage findUserInfo(String redisKey,String accountName) {
+        return findUserInfo(redisKey,accountName, false);
+    }
+
+
+    /**
+     * 根据账号密码登录
+     * @param  userParam: 登录信息
+     *  accountName:账号即手机号
+     *  accountPwd：密码
+     *  validToken： 登录生成的token
+     *  isVerifyCode ：是否校验验证码（为true则校验，false则不校验）
+     * @return  ResultMessage
+     * @version <1> 2018-08-08 13:46:16 cxw : Created.
+     *
+     *
+     * @version<2> 2018-08-29 lcw : modify.
+     *  1.验证用户名密码是否正确
+     *  2.将用户信息和角色信息缓存至redis中
+     *  3.各业务系统可能需要的信息分别进入对应的登陆方法进行增加,此处只是公共部分
+     *
+     */
+    public ResultMessage findUserInfo(String redisKey,String accountName, boolean useProductFilterFlag) {
+        Map<String,Object> voMap = new HashMap<String, Object>();
+
+        if (StringUtils.isBlank(accountName)) {
+            return ResultMessage.fail(UserEnum.ACCOUNT_NAME_EMPTY.getValue(), UserEnum.ACCOUNT_NAME_EMPTY.getMesasge());
+        }
+
+
+
+
+        ResultMessage userInfo = getUserInfo(accountName);
+        if(userInfo.isFlag()){
+            voMap.put("userInfo",(Map<String,Object>)userInfo.getData());
+        }
+
+
+
+        voMap.put(ConstantUtil.USEPRODUCTFILTER_KEY, useProductFilterFlag);
+
+        //AccessToken
+
+        voMap.put(SysConstant.Key_Login_Token, redisKey); //token
+
+        return ResultMessage.success(voMap);
     }
 
 
@@ -1632,18 +1749,6 @@ public class UserService implements IUserService {
             return res;
         }
         return res;
-    }
-
-    /*
-     * 功能描述: 验证该注册用户是否注册超过90天
-     * @Param:
-     * @Return: [mobile]
-     * @version<1>  2019/11/11  wangli :Created
-     */
-    @Override
-    public ResultMessage authRegisterDate(String mobile) {
-        int days = permPersonMapper.authRegisterDate(mobile);
-        return ResultMessage.success(days);
     }
 
 }

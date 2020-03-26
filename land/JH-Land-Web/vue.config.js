@@ -36,7 +36,8 @@ module.exports = {
         public: resolve("public"),
         store: resolve("src/store"),
         pages: resolve("src/pages"),
-        utils: resolve("src/utils")
+        utils: resolve("src/utils"),
+        config: resolve("src/config")
       }
     }
   },
@@ -66,14 +67,14 @@ module.exports = {
     open: true,
     hot: true,
     proxy: {
-		"/api": {
-			target: "http://161.189.81.10:8001",
-			changeOrigin: true,
-			ws: true,
-			pathRewrite: {
-				"^/api": "" // 设置过滤关键字api
-				}
-			}
-		}
-	}
+      "/api": {
+        target: "http://161.189.81.10:8001",
+        changeOrigin: true,
+        ws: true,
+        pathRewrite: {
+          "^/api": "" // 设置过滤关键字api
+        }
+      }
+    }
+  }
 };

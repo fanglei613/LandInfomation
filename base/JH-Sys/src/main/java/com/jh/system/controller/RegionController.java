@@ -43,16 +43,6 @@ public class RegionController {
     }
 
     /**
-     *  @description: 根据父类区域ID查询其下一级包含地块的区域列表
-     */
-    @ApiOperation(value="Find Region List for Parent Region By Block",notes="根据父类区域ID查询其下一级包含地块的区域列表")
-    @ApiImplicitParam(name = "parentId",value = "父级区域ID",required = false,paramType="form",dataType = "Long")
-    @RequestMapping(value="/blockRegionList",method= RequestMethod.POST)
-    public ResultMessage queryBlockRegionList(@RequestBody(required=false)DictParam dictParam){
-        return regionService.findBlockRegionListByParentId(dictParam.getParentId(),dictParam.getLevel());
-    }
-
-    /**
      *  @description: 根据父类区域ID查询其省级区域列表
      *  @version <1> 2018-04-17 cxw:Created.
      */
@@ -149,7 +139,6 @@ public class RegionController {
      * 查询指定父节点下的所有子区域数据
      *
      * @param regionTreeReturn 区域树映射实体参数
-     * @version <1> 2018/1/31 djh： Created.
      * @version <1> 2018/1/31 djh： Created.
      */
     @ApiOperation(value = "查询指定父节点下的所有子区域数据")
@@ -268,27 +257,12 @@ public class RegionController {
      * 根据父类区域ID查询其下一级区域列表
      * @version <1> 2017-11-07 Hayden:Created.
      */
-  /*  @ApiOperation(value="Find Region List for Parent Region",notes="根据父类区域ID查询其下一级区域列表")
+    @ApiOperation(value="Find Region List for Parent Region",notes="根据父类区域ID查询其下一级区域列表")
     @ApiImplicitParam(name = "parentId",value = "父级区域ID",required = false,paramType="form",dataType = "Long")
     @RequestMapping(value="/regionList",method=RequestMethod.GET)
     public ResultMessage queryRegionList(Long parentId){
         List<InitRegion> list =  regionService.findRegionsByParentId(parentId);
         return ResultMessage.success("success","1",list);
-    }
-*/
-
-    @ApiOperation(value="Find Region List for Parent Region",notes="根据父类区域ID查询自身以及其下一级区域列表")
-    @ApiImplicitParam(name = "parentId",value = "父级区域ID",required = false,paramType="form",dataType = "Long")
-    @RequestMapping(value="/findRegionIdListByRegionCode",method= RequestMethod.POST)
-    public ResultMessage findRegionIdListByRegionCode(@RequestParam String regionCode){
-        return regionService.findRegionIdListByRegionCode(regionCode);
-    }
-
-    @ApiOperation(value="Find Region List for Parent Region",notes="根据父类区域ID查询自身以及其下一级区域列表")
-    @ApiImplicitParam(name = "parentId",value = "父级区域ID",required = false,paramType="form",dataType = "Long")
-    @RequestMapping(value="/findRegionByCode",method= RequestMethod.POST)
-    public ResultMessage findRegionByCode(@RequestParam String regionCode){
-        return regionService.findRegionByCode(regionCode);
     }
 
 }

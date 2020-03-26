@@ -330,6 +330,31 @@
         select <include refid="Base_Column_List" /> from init_dict where del_flag = '1' and data_status='1' and  data_code = #{dataCode}
     </select>
 
+    <!--根据keyword查询字典中是否匹配-->
+    <select id="queryFirstClassify" resultMap="BaseResultMap" parameterType="java.lang.String">
+         select dict_id from init_dict where del_flag = '1' and data_status='1' and parent_id = 17001 and  data_name = #{keyword}
+    </select>
 
+    <!--根据keyword查询字典中是否匹配-->
+    <select id="querySecondClassify" resultMap="BaseResultMap" parameterType="java.lang.String">
+          SELECT a.dict_id,a.parent_id
+            FROM
+                init_dict
+                A LEFT JOIN init_dict b ON A.parent_id = b.dict_id
+
+            WHERE
+                b.parent_id = 17001
+                AND A.data_name = #{keyword}
+    </select>
+
+    <!--根据keyword查询字典中是否匹配-->
+    <select id="queryCrop" resultMap="BaseResultMap" parameterType="java.lang.String">
+        SELECT dict_id
+        FROM
+        init_dict
+        WHERE
+        parent_id = 500
+        AND data_name = #{keyword}
+    </select>
 
 </mapper>

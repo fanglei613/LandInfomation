@@ -182,4 +182,12 @@ public interface IDictService  extends IBaseService<DictParam, Dict,Integer> {
      * @return
      */
     ResultMessage queryDictByCode(String dataCode);
+
+    /*
+     * 功能描述: 检查关键字是否和下方的查询条件相同
+     * @Param:
+     * @Return: [keyword]
+     * @version<1>  2019/10/17  wangli :Created
+     */
+    ResultMessage checkKeyWord(String keyword);
 }

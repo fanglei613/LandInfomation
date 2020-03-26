@@ -26,7 +26,6 @@ public class DictParam {
     private Integer orderNo ;//序号
     private boolean leaf ; // 是否叶子节点
     private Long parentId ;//上一级
-    private Integer level; // 级别
     private String parentName; //上级节点
     private String delFlag; //删除标记
     private String dataType; //数据类型（0为系统初始化，1为用户增加）
@@ -192,14 +191,6 @@ public class DictParam {
 
     public void setEditCode(String editCode) {
         this.editCode = editCode;
-    }
-
-    public Integer getLevel() {
-        return level;
-    }
-
-    public void setLevel(Integer level) {
-        this.level = level;
     }
 
     /**

@@ -176,11 +176,6 @@ public class PermPersonServiceImpl extends BaseServiceImpl<PersonParam, PermPers
     }
 
     @Override
-    public Integer queryVipType(Integer acountId) {
-        return permPersonMapper.queryVipType(acountId);
-    }
-
-    @Override
     public ResultMessage findPersonByAccountId(Integer accountId) {
         try {
             PermPerson permPerson = permPersonMapper.findPersonByAccountId(accountId);

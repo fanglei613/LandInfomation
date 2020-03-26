@@ -24,9 +24,25 @@
                         src="../assets/images/user/user-avtar.png"
                         width="32"
                         height="32"
-                        alt=""
+                        alt
                 />
                 <span>小珈助手</span>
+                <ul class="userMenu" v-show="showUserCenter">
+                    <li class="isCms">
+                        <a href=" " target="_blank">
+                        <i class="iconfont">&#xe640;</i>后台管理
+                    </a>
+                    </li>
+                    <li>
+                        <a href class="active" id>
+                            <i class="iconfont">&#xe641;</i>我的主页
+                        </a>
+                    </li>
+                    <li>
+                        <a href="#" id="quitBtn"> <i class="iconfont">&#xe63f;</i>退出
+                    </a>
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
@@ -34,6 +50,7 @@
 
 <script>
     import jRegion from "@/components/region";
+    import {LOGIN_CONFIG} from "../config/url_config";
 
     export default {
         name: "jHeader",
@@ -41,7 +58,29 @@
             jRegion
         },
         data() {
-            return {};
+            return {
+                showUserCenter: false
+            };
+        },
+        mounted() {
+            // 初始化
+            this.init();
+        },
+        methods: {
+            init() {
+                // 判断用户是否登录
+                this.isLogin();
+            },
+            isLogin() {
+                this.$axios
+                    .get(this.baseApiPath + LOGIN_CONFIG.check_user_login)
+                    .then(result => {
+                        console.log(result);
+                    })
+                    .catch(error => {
+                        console.log(error);
+                    });
+            }
         }
     };
 </script>
@@ -93,12 +132,52 @@
             }
 
             .user {
+                position: relative;
                 display: inline-flex;
                 align-items: center;
 
                 span {
                     font-size: 12px;
                     margin-left: 10px;
+                }
+
+                .userMenu {
+                    position: absolute;
+                    top: 45px;
+                    left: -33px;
+                    width: 135px;
+                    height: 135px;
+                    padding-left: 17px;
+                    padding-top: 20px;
+                    background: #ffffff;
+                    box-shadow: 0px 3px 6px rgba(0, 0, 0, 0.16);
+                    z-index: 10000;
+
+                    li {
+                        margin-bottom: 20px;
+
+                        a {
+                            display: block;
+                            font-size: 13px;
+                            color: #707070;
+
+                            &:hover {
+                                color: #007dff;
+
+                                i {
+                                    color: #007dff;
+                                }
+                            }
+
+                            i {
+                                display: inline-block;
+                                vertical-align: middle;
+                                margin-right: 20px;
+                                font-size: 20px;
+                                color: #5f5e5e;
+                            }
+                        }
+                    }
                 }
             }
         }

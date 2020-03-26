@@ -21,6 +21,7 @@
     <sql id="Base_Column_List" >
         account_id, account_name, account_pwd, nick_name, remark, data_status,del_flag,
         create_time, creator_name, creator, modify_time,modifier_name, modifier, account_code
+
     </sql>
 
     <!--
@@ -242,8 +243,7 @@
         b.person_type AS "personType",
 --         b.industry AS industry,
 --         b.company AS company,
-        b.person_id as "personId",
-        b.vip_type as "vipType"
+        b.person_id as "personId"
 --      ,cl.region_id,b.wechat_id,ir.china_name as chinaName
         FROM  sys_perm_account a LEFT JOIN sys_perm_person b
         ON a.account_id = b.account_id

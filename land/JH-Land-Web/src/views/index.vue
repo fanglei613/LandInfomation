@@ -1,5 +1,5 @@
 <template>
-    <div class="content">
+    <div class="content">mai
         <!-- 左侧列表 -->
         <j-table :cropMap="cropMap"></j-table>
         <!-- 作物下拉框选择-->

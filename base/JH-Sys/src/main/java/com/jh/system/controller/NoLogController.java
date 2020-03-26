@@ -7,19 +7,20 @@
 package com.jh.system.controller;
 
 import com.github.pagehelper.PageInfo;
-import com.github.sd4324530.fastweixin.api.entity.UserInfo;
 import com.jh.constant.CommonDefineEnum;
 import com.jh.enums.ImageValidateCodeEnum;
 import com.jh.system.Enum.UserEnum;
 import com.jh.system.base.controller.BaseController;
-import com.jh.system.entity.OpLoginLogs;
 import com.jh.system.entity.PermAccount;
 import com.jh.system.entity.PermPerson;
 import com.jh.system.model.LoginParam;
 import com.jh.system.model.PersonParam;
 import com.jh.system.model.RegisterEntity;
 import com.jh.system.model.UserParam;
-import com.jh.system.service.*;
+import com.jh.system.service.IBuzRedisService;
+import com.jh.system.service.IPermAccountService;
+import com.jh.system.service.IPermPersonService;
+import com.jh.system.service.IUserService;
 import com.jh.util.AccountTokenUtil;
 import com.jh.util.CaptchaUtil;
 import com.jh.util.PropertyUtil;
@@ -37,7 +38,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -67,9 +67,6 @@ public class NoLogController extends BaseController{
 
 	@Autowired
 	private IPermPersonService permPersonService;
-
-	@Autowired
-	private IOpLoginLogsService opLoginLogsService;
 
 
 	/**
@@ -286,31 +283,35 @@ public class NoLogController extends BaseController{
 	})
 	@PostMapping("/loginForWeb")
 	public ResultMessage loginForWeb(@RequestBody UserParam userParam) {
+
 		ResultMessage result = userService.loginForWeb(userParam);
-		if(result.isFlag() && result.getData()!=null){
-			Object object = result.getData();
-			Map<String,Object> voMap = new HashMap<>();
-			 voMap = (Map<String,Object>)object;
-			Map<String, Object> userInfo =(Map<String,Object>)voMap.get("userInfo");
-			int personType = Integer.parseInt(userInfo.get("personType").toString());
-			int vipType = Integer.parseInt(userInfo.get("vipType").toString());
-			if(personType==1702 && vipType==0){
-				//如果为外部注册的用户且为非付费用户，注册时间超过90天，则不允许登录
-				ResultMessage resultMessage = userService.authRegisterDate(userParam.getPermAccount().getAccountName());
-				if(resultMessage.isFlag() && Integer.parseInt(resultMessage.getData().toString())>90){
-					resultMessage.setMsg("90天试用期已经截止");
-					resultMessage.setFlag(false);
-					return  resultMessage;
-				}
-			}
-			//增加一次登陆的记录信息
-			//记录登陆人的id  登陆时间
-			OpLoginLogs opLoginLogs = new OpLoginLogs();
-			opLoginLogs.setOperator(Integer.parseInt(userInfo.get("accountId").toString()));
-			opLoginLogs.setOperatorName(userInfo.get("personName").toString());
-			opLoginLogs.setOpContent("用户登录");
-			opLoginLogsService.recordLogin(opLoginLogs);
-		}
+
+		return result;
+	}
+
+
+	/**
+	 * 更新用户信息功能:
+	 *
+	 * 根据账号密码验证码登录
+	 * @param  userParam: 登录信息
+	 *  accountName:账号即手机号
+	 *  accountPwd：密码（前端base64加密）
+	 *  verifyCode：图形验证码
+	 *   validToken： 登录生成的token
+	 * @return  ResultMessage
+	 * @version <1> 2018-08-08 13:46:16 cxw : Created.(加注释)
+	 * @version <2> 2018-08-28 lcw : 修改
+	 */
+	@ApiOperation(value="更新用户信息",notes="更新用户信息")
+	@ApiImplicitParams({
+			@ApiImplicitParam(name = "userParam",value = "用户账户参数对象",required = true, dataType = "UserParam")
+	})
+	@PostMapping("/updateUserInfo")
+	public ResultMessage updateUserInfo(@RequestParam String redisKey,@RequestParam String accountName) {
+
+		ResultMessage result = userService.updateUserInfo(redisKey,accountName);
+
 		return result;
 	}
 
@@ -619,6 +620,7 @@ public class NoLogController extends BaseController{
 		return result;
 
 	}
+
 
 
 }

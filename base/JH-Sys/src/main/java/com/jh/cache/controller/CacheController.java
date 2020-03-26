@@ -181,4 +181,12 @@ public class CacheController {
     }
 
 
+
+    @ApiIgnore
+    @ApiOperation(value="根据pid查询数据字典列表",notes="根据pid查询数据字典列表" )
+    @PostMapping(value="/findType")
+    public ResultMessage findType(Integer parentId){
+        return cacheService.findType(parentId);
+    }
+
 }

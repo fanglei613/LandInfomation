@@ -4,6 +4,8 @@ import com.jh.entity.BaseEntity;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 
+import java.util.List;
+
 /**
  * @description: 字典实体类
  * @version <1> 2018-01-17 cxj： Created.
@@ -29,6 +31,10 @@ public class Dict extends BaseEntity {
 
 
     private String parentName; //上级节点
+
+    private Boolean hasSonList;//是否有子列表
+
+    private List<Dict> sonList;//子列表
 
 
     public Integer getDictId() {
@@ -102,5 +108,21 @@ public class Dict extends BaseEntity {
 
     public void setParentName(String parentName) {
         this.parentName = parentName;
+    }
+
+    public List<Dict> getSonList() {
+        return sonList;
+    }
+
+    public void setSonList(List<Dict> sonList) {
+        this.sonList = sonList;
+    }
+
+    public Boolean getHasSonList() {
+        return hasSonList;
+    }
+
+    public void setHasSonList(Boolean hasSonList) {
+        this.hasSonList = hasSonList;
     }
 }
